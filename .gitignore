@@ -43,3 +43,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ingestion (laptop-only Python)
+ingestion/.venv/
+ingestion/out/*.jsonl
+ingestion/.pytest_cache/
+ingestion/__pycache__/
+ingestion/**/__pycache__/
+ingestion/tests/.pytest_cache/

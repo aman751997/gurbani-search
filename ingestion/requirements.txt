@@ -1,0 +1,6 @@
+# U2/U3/U4 ingestion tooling — laptop-only, never deployed.
+requests==2.32.3
+pytest==8.3.3
+# U3 embedding generator uses stdlib urllib + requests; nothing GPU-ish.
+# U4 seed script talks to Supabase via PostgREST/psycopg — resolved in U4.
+psycopg[binary]==3.2.3
