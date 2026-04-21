@@ -1,0 +1,68 @@
+#!/usr/bin/env sh
+# Pre-commit secret scan. Runs before every git commit.
+#
+# Scans staged content for patterns that look like real secrets. Aborts the
+# commit on match with a clear message. Safe to invoke manually:
+#   bash .husky/pre-commit
+#
+# Allowed: empty KEY= lines in .env.example (no value after `=` so the
+# non-empty-value regexes below do not match).
+# Denied: real-looking tokens committed anywhere.
+
+set -eu
+
+# If this script runs outside a git repo or with no staged changes, exit clean.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  exit 0
+fi
+
+# List of staged files, excluding deletions and node_modules.
+staged_files="$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -vE '^(node_modules/|\.env\.example$)' || true)"
+
+if [ -z "$staged_files" ]; then
+  exit 0
+fi
+
+fail=0
+report() {
+  # $1=pattern-label  $2=file
+  printf 'ERROR: pre-commit secret scan matched %s in %s\n' "$1" "$2" >&2
+  fail=1
+}
+
+# Regexes — POSIX ERE where possible.
+#   1. Anthropic API key. Matches the shape sk-ant-<suffix>-<keymaterial>
+#      with at least 30 chars of key material — strict enough to skip
+#      prose mentions like "sk-ant-*" while catching any real token.
+ANTHROPIC_RE='sk-ant-[A-Za-z0-9]+-[A-Za-z0-9_-]{30,}'
+#   2. Any assignment of a server-only secret var to a NON-EMPTY value.
+#      The `=.+` requires at least one char after `=`, so `KEY=` lines pass.
+SECRET_ASSIGN_RE='^(SUPABASE_SERVICE_KEY|ANTHROPIC_API_KEY|CLOUDFLARE_AI_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)=.+$'
+#   3. Cloudflare-shaped token assignment (catches hex/base64 blobs after `=`).
+CF_ASSIGN_RE='^CLOUDFLARE_AI_API_TOKEN=.+$'
+
+IFS='
+'
+for f in $staged_files; do
+  # Read the staged version of the file (not the worktree copy) so we scan
+  # exactly what will land in the commit.
+  content="$(git show ":$f" 2>/dev/null || true)"
+  [ -n "$content" ] || continue
+
+  if printf '%s' "$content" | grep -qE "$ANTHROPIC_RE"; then
+    report 'Anthropic key prefix (sk-ant-)' "$f"
+  fi
+  if printf '%s' "$content" | grep -qE "$SECRET_ASSIGN_RE"; then
+    report 'non-empty assignment of a server-only secret env var' "$f"
+  fi
+  if printf '%s' "$content" | grep -qE "$CF_ASSIGN_RE"; then
+    report 'non-empty Cloudflare AI API token assignment' "$f"
+  fi
+done
+
+if [ "$fail" -ne 0 ]; then
+  printf '\nCommit aborted. Remove the secret and rewrite staged content before retrying.\n' >&2
+  exit 1
+fi
+
+exit 0
