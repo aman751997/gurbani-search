@@ -19,8 +19,34 @@ logger = logging.getLogger(__name__)
 MODEL = "@cf/baai/bge-m3"
 EMBED_DIM = 1024
 # Cloudflare's BGE-M3 endpoint accepts a ``text`` array. The sweet spot
-# between batch efficiency and request timeout is 32 inputs per request.
+# between batch efficiency and request timeout is 32 inputs per request —
+# but Cloudflare enforces a HARD 60,000-token *total* context budget across
+# every item in the batch. A naive batch of 32 long shabad translations
+# trips that limit, so the runner uses ``pack_by_budget`` to size batches
+# dynamically by estimated token count and still caps at ``DEFAULT_BATCH_SIZE``.
 DEFAULT_BATCH_SIZE = 32
+
+# Cloudflare's observed combined-context cap is 60,000 tokens across the
+# whole batch; keep a 5k-token safety margin for tokenizer drift and
+# request overhead. Calibration — a 36,215-char batch of Bhai Manmohan
+# Singh translations tokenized to ~88,416 tokens (≈2.44 tok/char), which
+# is ~6x higher than the usual English ratio. The BMS text includes
+# archaic English spellings, hyphenated compound forms, and occasional
+# transliteration marks that sentencepiece BPE fragments aggressively.
+# ``CHARS_PER_TOKEN=0.35`` (≈2.86 tokens/char) bakes in a ~17% safety
+# margin over the observed ratio, so MAX_BATCH_TOKENS=55,000 caps a
+# batch at ≈19,250 characters — comfortably under the 60k-token limit.
+MAX_BATCH_TOKENS = 55_000
+CHARS_PER_TOKEN = 0.35
+# Per-text truncation cap. BGE-M3's own context window is 8192 tokens;
+# at the observed 2.44 tok/char ratio that's ≈3350 chars. We truncate at
+# 3200 chars to leave headroom for special/CLS tokens and ensure no
+# single item is ever rejected by the model. Only a handful of SGGS
+# shabads (out of ~5535) exceed this threshold; they are long prose
+# passages where the tail contributes little retrievable signal.
+MAX_TEXT_CHARS = 3200
+# Kept for backward-compat with the test suite; derived from the char cap.
+MAX_INPUT_TOKENS = int(MAX_TEXT_CHARS / CHARS_PER_TOKEN)
 
 
 class EmbeddingError(RuntimeError):
@@ -146,3 +172,63 @@ def chunked(seq: list[Any], size: int) -> list[list[Any]]:
     if size < 1:
         raise ValueError("chunk size must be >= 1")
     return [seq[i : i + size] for i in range(0, len(seq), size)]
+
+
+def estimate_tokens(text: str) -> int:
+    """Cheap char-count-based token estimate for batch-packing.
+
+    Real BGE-M3 tokenization would require shipping the tokenizer; the
+    Cloudflare endpoint enforces the real limit, so this only needs to be
+    conservatively correct. Rounding up on short strings avoids zero-token
+    items packing infinitely.
+    """
+    if not text:
+        return 0
+    return max(1, int(len(text) / CHARS_PER_TOKEN) + 1)
+
+
+def truncate_for_embed(text: str, *, max_chars: int = MAX_TEXT_CHARS) -> str:
+    """Hard-cap a single input text to ``max_chars`` characters.
+
+    BGE-M3 truncates silently past its 8192-token context window. Doing
+    it explicitly here keeps the batch packer's budget math consistent
+    and makes truncation visible in ingest logs. A ``max_chars`` value
+    of 0 disables truncation.
+    """
+    if not text or max_chars <= 0:
+        return text
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars]
+
+
+def pack_by_budget(
+    items: list[Any],
+    text_of: Callable[[Any], str],
+    *,
+    max_tokens: int = MAX_BATCH_TOKENS,
+    max_items: int = DEFAULT_BATCH_SIZE,
+) -> list[list[Any]]:
+    """Group ``items`` into batches that stay under both a token and item cap.
+
+    Each item's token count is estimated via ``estimate_tokens(text_of(item))``.
+    A single item that alone exceeds ``max_tokens`` is emitted as its own
+    one-element batch — the caller is responsible for truncating upstream.
+    """
+    if max_tokens < 1:
+        raise ValueError("max_tokens must be >= 1")
+    if max_items < 1:
+        raise ValueError("max_items must be >= 1")
+    batches: list[list[Any]] = []
+    cur: list[Any] = []
+    cur_tokens = 0
+    for it in items:
+        t = estimate_tokens(text_of(it))
+        if cur and (cur_tokens + t > max_tokens or len(cur) >= max_items):
+            batches.append(cur)
+            cur, cur_tokens = [], 0
+        cur.append(it)
+        cur_tokens += t
+    if cur:
+        batches.append(cur)
+    return batches

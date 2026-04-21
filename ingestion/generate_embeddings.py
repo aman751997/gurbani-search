@@ -44,9 +44,11 @@ if str(_HERE) not in sys.path:
 from ingest.embeddings import (  # noqa: E402
     DEFAULT_BATCH_SIZE,
     EMBED_DIM,
+    MAX_BATCH_TOKENS,
     EmbeddingError,
-    chunked,
     embed_batch,
+    pack_by_budget,
+    truncate_for_embed,
 )
 
 
@@ -176,24 +178,41 @@ def generate_embeddings(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     written = 0
     skipped_empty = 0
+    truncated = 0
     batches = 0
     flushed_since_checkpoint = 0
 
+    # Pre-filter empty rows and truncate over-long texts so the packer's
+    # token-budget math reflects what will actually be sent to Cloudflare.
+    prepared: list[tuple[dict[str, Any], str]] = []
+    for row in pending:
+        text = _text_for(row)
+        if not text:
+            logger.warning(
+                "skipping shabad %s: empty translation_bms",
+                row.get("shabad_id"),
+            )
+            skipped_empty += 1
+            continue
+        truncated_text = truncate_for_embed(text)
+        if truncated_text != text:
+            truncated += 1
+            logger.warning(
+                "truncated shabad %s: %d -> %d chars (BGE-M3 8k-token cap)",
+                row.get("shabad_id"), len(text), len(truncated_text),
+            )
+        prepared.append((row, truncated_text))
+
     with out_path.open("a", encoding="utf-8") as f_out:
-        batches_list = chunked(pending, batch_size)
+        batches_list = pack_by_budget(
+            prepared,
+            text_of=lambda pair: pair[1],
+            max_items=batch_size,
+            max_tokens=MAX_BATCH_TOKENS,
+        )
         for batch_idx, batch in enumerate(batches_list):
-            texts, good_rows = [], []
-            for row in batch:
-                text = _text_for(row)
-                if not text:
-                    logger.warning(
-                        "skipping shabad %s: empty translation_bms",
-                        row.get("shabad_id"),
-                    )
-                    skipped_empty += 1
-                    continue
-                texts.append(text)
-                good_rows.append(row)
+            good_rows = [row for row, _ in batch]
+            texts = [text for _, text in batch]
             if not texts:
                 continue
             try:
@@ -235,6 +254,7 @@ def generate_embeddings(
         "already": len(already),
         "total": len(rows),
         "skipped_empty": skipped_empty,
+        "truncated": truncated,
         "batches": batches,
     }
 
@@ -257,9 +277,10 @@ def main(argv: list[str] | None = None) -> int:
         limit=args.limit,
     )
     logger.warning(
-        "embedding summary: written=%d already=%d total=%d skipped_empty=%d batches=%d out=%s",
+        "embedding summary: written=%d already=%d total=%d skipped_empty=%d truncated=%d batches=%d out=%s",
         summary["written"], summary["already"], summary["total"],
-        summary["skipped_empty"], summary["batches"], args.out_path,
+        summary["skipped_empty"], summary["truncated"], summary["batches"],
+        args.out_path,
     )
     return 0
 

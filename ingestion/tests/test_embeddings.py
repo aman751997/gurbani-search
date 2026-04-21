@@ -213,3 +213,86 @@ def test_embed_batch_retries_on_network_exception():
     )
     assert len(out) == 1
     assert len(waits) == 1
+
+
+# ---------------------------------------------------------------------------
+# pack_by_budget / truncate_for_embed — added after live run hit Cloudflare's
+# 60k-token combined-context cap on a naive 32-item batch of long shabads.
+# ---------------------------------------------------------------------------
+
+
+def test_estimate_tokens_scales_with_length():
+    assert embeddings.estimate_tokens("") == 0
+    short = embeddings.estimate_tokens("hello")
+    long = embeddings.estimate_tokens("x" * 4000)
+    assert short >= 1
+    assert long > short * 100
+
+
+def test_truncate_for_embed_caps_long_text():
+    long = "a" * 100_000
+    out = embeddings.truncate_for_embed(long, max_chars=3200)
+    assert len(out) == 3200
+    assert len(out) < len(long)
+
+
+def test_truncate_for_embed_preserves_short_text():
+    short = "hello world"
+    assert embeddings.truncate_for_embed(short, max_chars=3200) == short
+
+
+def test_truncate_for_embed_max_zero_disables():
+    s = "anything"
+    assert embeddings.truncate_for_embed(s, max_chars=0) == s
+
+
+def test_truncate_for_embed_default_cap_matches_module_constant():
+    long = "a" * 100_000
+    out = embeddings.truncate_for_embed(long)
+    assert len(out) == embeddings.MAX_TEXT_CHARS
+
+
+def test_pack_by_budget_respects_token_cap():
+    # Each item ~100 chars ≈ ~30 tokens. With max_tokens=100, batches of 3.
+    items = [f"item-{i}-" + "x" * 95 for i in range(10)]
+    batches = embeddings.pack_by_budget(
+        items, text_of=lambda s: s, max_tokens=100, max_items=1000,
+    )
+    for b in batches:
+        total = sum(embeddings.estimate_tokens(x) for x in b)
+        # a batch might exceed slightly on the first item if that item alone > cap
+        assert total <= 100 or len(b) == 1
+    # All items accounted for, order preserved.
+    assert [x for b in batches for x in b] == items
+
+
+def test_pack_by_budget_respects_item_cap():
+    items = ["short"] * 10
+    batches = embeddings.pack_by_budget(
+        items, text_of=lambda s: s, max_tokens=10**9, max_items=3,
+    )
+    assert all(len(b) <= 3 for b in batches)
+    assert sum(len(b) for b in batches) == 10
+
+
+def test_pack_by_budget_emits_oversize_item_alone():
+    # One huge item alone exceeds max_tokens → own batch.
+    items = ["x" * 100, "y" * 100_000, "z" * 100]
+    batches = embeddings.pack_by_budget(
+        items, text_of=lambda s: s, max_tokens=200, max_items=100,
+    )
+    # The oversize item must be in a batch by itself (or at least isolated
+    # from the following short item).
+    huge_batch = [b for b in batches if any(len(x) > 1000 for x in b)][0]
+    assert len(huge_batch) == 1
+
+
+def test_pack_by_budget_empty_input_returns_empty():
+    assert embeddings.pack_by_budget([], text_of=lambda s: s) == []
+
+
+def test_pack_by_budget_rejects_nonpositive_caps():
+    with pytest.raises(ValueError):
+        embeddings.pack_by_budget([1], text_of=str, max_tokens=0)
+    with pytest.raises(ValueError):
+        embeddings.pack_by_budget([1], text_of=str, max_items=0)
