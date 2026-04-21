@@ -174,13 +174,17 @@ def test_fetch_corpus_skips_shabads_missing_verses(tmp_path: Path):
     assert summary["written"] == 1
 
 
-def test_fetch_corpus_skips_invalid_translation(tmp_path: Path):
-    # shabad with an empty MS translation should be dropped with invalid count
+def test_fetch_corpus_skips_shabad_with_neither_ms_nor_ssk(tmp_path: Path):
+    # A shabad that has only ``bdb`` (Bhai Dharam Singh Bhalla, a minor
+    # translator we don't accept) and neither ``ms`` nor ``ssk`` must be
+    # dropped. This mirrors the real-world edge case on shabad 2032 that
+    # motivated the fallback cascade in the first place — if both accepted
+    # translators are missing we'd rather skip than silently show bdb.
     bad_verse = {
         "shabadId": "x",
         "verse": {"unicode": "ਸਤਿ"},
         "transliteration": {"en": "sat"},
-        "translation": {"en": {"bdb": "BDB only"}},  # no ms
+        "translation": {"en": {"bdb": "BDB only"}},
         "pageNo": 1,
         "lineNo": 1,
         "writer": {"english": "Guru Nanak Dev Ji"},
@@ -198,6 +202,66 @@ def test_fetch_corpus_skips_invalid_translation(tmp_path: Path):
     )
     assert summary["invalid"] == 1
     assert summary["written"] == 0
+
+
+def test_fetch_corpus_writes_shabad_when_only_ssk_available(tmp_path: Path):
+    # The real reason we rewrote the parser: ~4% of shabads on BaniDB have
+    # no ``ms`` entry but do have ``ssk``. Those shabads must now land in
+    # the output JSONL (they were silently skipped by the old validator).
+    verse = {
+        "shabadId": "42",
+        "verse": {"unicode": "ਸਤਿ ਨਾਮੁ"},
+        "transliteration": {"en": "sat naam"},
+        "translation": {"en": {"ssk": "Truth is His Name. (SSK)"}},
+        "pageNo": 1,
+        "lineNo": 1,
+        "writer": {"english": "Guru Nanak Dev Ji"},
+        "raag": {"english": "Jap"},
+    }
+    fetcher = _make_fetcher({"42": {"verses": [verse]}})
+    out = tmp_path / "shabads.jsonl"
+    summary = fetch_corpus.fetch_corpus(
+        source="sttm-desktop",
+        out_path=out,
+        ang_iterator=_fake_ang_iter([(1, "42")]),
+        shabad_fetcher=fetcher,
+        session_factory=lambda: object(),
+        sleep=lambda w: None,
+    )
+    assert summary["written"] == 1
+    assert summary["invalid"] == 0
+    rec = json.loads(out.read_text(encoding="utf-8").splitlines()[0])
+    assert rec["translation_bms"] == "Truth is His Name. (SSK)"
+    assert rec["translation_source"] == "ssk"
+
+
+def test_fetch_corpus_prefers_ms_when_both_present(tmp_path: Path):
+    # Regression guard: when both ms and ssk are available, ms wins and the
+    # attribution is "ms". Protects against someone accidentally flipping
+    # the cascade order.
+    verse = {
+        "shabadId": "7",
+        "verse": {"unicode": "ਸਤਿ"},
+        "transliteration": {"en": "sat"},
+        "translation": {"en": {"ms": "BMS text", "ssk": "SSK text"}},
+        "pageNo": 1,
+        "lineNo": 1,
+        "writer": {"english": "Guru Nanak Dev Ji"},
+        "raag": {"english": "Jap"},
+    }
+    fetcher = _make_fetcher({"7": {"verses": [verse]}})
+    out = tmp_path / "shabads.jsonl"
+    fetch_corpus.fetch_corpus(
+        source="sttm-desktop",
+        out_path=out,
+        ang_iterator=_fake_ang_iter([(1, "7")]),
+        shabad_fetcher=fetcher,
+        session_factory=lambda: object(),
+        sleep=lambda w: None,
+    )
+    rec = json.loads(out.read_text(encoding="utf-8").splitlines()[0])
+    assert rec["translation_bms"] == "BMS text"
+    assert rec["translation_source"] == "ms"
 
 
 def test_fetch_corpus_fetch_error_counts_invalid(tmp_path: Path):

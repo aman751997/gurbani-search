@@ -114,21 +114,23 @@ def _halfvec_literal(vec: list[float]) -> str:
 SHABAD_UPSERT = """
 INSERT INTO public.shabads (
     shabad_id, gurmukhi, gurmukhi_display, transliteration,
-    translation_bms, ang, author, raag, line_count
+    translation_bms, translation_source, ang, author, raag, line_count
 ) VALUES (
     %(shabad_id)s, %(gurmukhi)s, %(gurmukhi_display)s, %(transliteration)s,
-    %(translation_bms)s, %(ang)s, %(author)s, %(raag)s, %(line_count)s
+    %(translation_bms)s, %(translation_source)s, %(ang)s, %(author)s,
+    %(raag)s, %(line_count)s
 )
 ON CONFLICT (shabad_id) DO UPDATE SET
-    gurmukhi         = EXCLUDED.gurmukhi,
-    gurmukhi_display = EXCLUDED.gurmukhi_display,
-    transliteration  = EXCLUDED.transliteration,
-    translation_bms  = EXCLUDED.translation_bms,
-    ang              = EXCLUDED.ang,
-    author           = EXCLUDED.author,
-    raag             = EXCLUDED.raag,
-    line_count       = EXCLUDED.line_count,
-    updated_at       = now();
+    gurmukhi           = EXCLUDED.gurmukhi,
+    gurmukhi_display   = EXCLUDED.gurmukhi_display,
+    transliteration    = EXCLUDED.transliteration,
+    translation_bms    = EXCLUDED.translation_bms,
+    translation_source = EXCLUDED.translation_source,
+    ang                = EXCLUDED.ang,
+    author             = EXCLUDED.author,
+    raag               = EXCLUDED.raag,
+    line_count         = EXCLUDED.line_count,
+    updated_at         = now();
 """
 
 EMBEDDING_UPSERT = """
@@ -165,12 +167,20 @@ def seed_shabads(conn: psycopg.Connection, shabads_path: Path) -> int:
     for batch in _chunks(_iter_jsonl(shabads_path), BATCH_SIZE_SHABADS):
         rows = []
         for rec in batch:
+            ts = rec.get("translation_source") or ""
+            if ts not in ("ms", "ssk"):
+                raise SeedError(
+                    f"shabad_id={rec.get('shabad_id')!r} has invalid "
+                    f"translation_source={ts!r}; expected 'ms' or 'ssk'. "
+                    "Re-run fetch_corpus.py after the parser patch."
+                )
             rows.append({
                 "shabad_id": str(rec["shabad_id"]),
                 "gurmukhi": rec.get("gurmukhi") or "",
                 "gurmukhi_display": rec.get("gurmukhi_display") or rec.get("gurmukhi") or "",
                 "transliteration": rec.get("transliteration") or "",
                 "translation_bms": rec.get("translation_bms") or "",
+                "translation_source": ts,
                 "ang": int(rec.get("ang") or 0),
                 "author": rec.get("author") or "",
                 "raag": rec.get("raag") or "",

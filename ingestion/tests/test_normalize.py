@@ -126,6 +126,7 @@ def test_normalize_verse_happy_path():
     assert rec["gurmukhi_display"] == rec["gurmukhi"]
     assert rec["transliteration"] == "ikOankaar sat naam"
     assert rec["translation_bms"] == "Bhai Manmohan Singh translation"
+    assert rec["translation_source"] == "ms"
     assert rec["ang"] == 1
     assert rec["author"] == "Guru Nanak Dev Ji"
     assert rec["raag"] == "Jap"
@@ -133,13 +134,46 @@ def test_normalize_verse_happy_path():
 
 def test_normalize_verse_prefers_ms_translation():
     v = _fake_verse(translation={"en": {"bdb": "BDB", "ms": "MS", "ssk": "SSK"}})
-    assert normalize_verse(v)["translation_bms"] == "MS"
+    rec = normalize_verse(v)
+    assert rec["translation_bms"] == "MS"
+    assert rec["translation_source"] == "ms"
+
+
+def test_normalize_verse_falls_back_to_ssk_when_ms_missing():
+    # BaniDB real-world gap: ~4% of shabads carry ssk but no ms. We must
+    # use ssk rather than silently dropping the shabad.
+    v = _fake_verse(translation={"en": {"bdb": "BDB only", "ssk": "SSK fallback"}})
+    rec = normalize_verse(v)
+    assert rec["translation_bms"] == "SSK fallback"
+    assert rec["translation_source"] == "ssk"
+
+
+def test_normalize_verse_falls_back_to_ssk_when_ms_empty_string():
+    # Defensive: BaniDB sometimes emits an empty string rather than omitting
+    # the key entirely. Treat "" the same as absent.
+    v = _fake_verse(translation={"en": {"ms": "", "ssk": "SSK fallback"}})
+    rec = normalize_verse(v)
+    assert rec["translation_bms"] == "SSK fallback"
+    assert rec["translation_source"] == "ssk"
+
+
+def test_normalize_verse_ignores_bdb_when_choosing_fallback():
+    # bdb (Bhai Dharam Singh Bhalla) is NOT an accepted fallback — if ms
+    # and ssk are both missing, the record is emitted empty and the caller
+    # is responsible for filtering.
+    v = _fake_verse(translation={"en": {"bdb": "BDB only"}})
+    rec = normalize_verse(v)
+    assert rec["translation_bms"] == ""
+    assert rec["translation_source"] == ""
 
 
 def test_normalize_verse_handles_missing_translation_gracefully():
     v = _fake_verse(translation={"en": {}})
-    # Missing MS must yield "" rather than raising or substituting BDB.
-    assert normalize_verse(v)["translation_bms"] == ""
+    # Neither ms nor ssk present → record carries empty text AND empty
+    # source. The CLI-level validator will reject these downstream.
+    rec = normalize_verse(v)
+    assert rec["translation_bms"] == ""
+    assert rec["translation_source"] == ""
 
 
 def test_normalize_verse_handles_missing_metadata():
@@ -165,6 +199,7 @@ def _verse_record(**overrides):
         "gurmukhi_display": "",
         "transliteration": "",
         "translation_bms": "",
+        "translation_source": "ms",
         "ang": 100,
         "author": "Guru Nanak Dev Ji",
         "raag": "Jap",
@@ -254,6 +289,7 @@ def _valid_shabad(**overrides):
         "gurmukhi_display": "ਸਤਿ ਨਾਮੁ",
         "transliteration": "sat naam",
         "translation_bms": "Truth is His Name.",
+        "translation_source": "ms",
         "ang": 1,
         "author": "Guru Nanak Dev Ji",
         "raag": "Jap",
@@ -297,3 +333,80 @@ def test_validate_shabad_rejects_gurmukhi_in_translation():
 def test_validate_shabad_rejects_zero_line_count():
     problems = validate_shabad(_valid_shabad(line_count=0))
     assert any("line_count" in p for p in problems)
+
+
+# ---------- translation_source propagation through assembly ----------
+
+def test_assemble_shabad_all_ms_verses_yields_ms_source():
+    v1 = _verse_record(gurmukhi="A", translation_bms="A",
+                       translation_source="ms", ang=1, lineNo=1)
+    v2 = _verse_record(gurmukhi="B", translation_bms="B",
+                       translation_source="ms", ang=1, lineNo=2)
+    shabad = assemble_shabad("42", [v1, v2])
+    assert shabad["translation_source"] == "ms"
+
+
+def test_assemble_shabad_all_ssk_verses_yields_ssk_source():
+    v1 = _verse_record(gurmukhi="A", translation_bms="A",
+                       translation_source="ssk", ang=1, lineNo=1)
+    v2 = _verse_record(gurmukhi="B", translation_bms="B",
+                       translation_source="ssk", ang=1, lineNo=2)
+    shabad = assemble_shabad("42", [v1, v2])
+    assert shabad["translation_source"] == "ssk"
+
+
+def test_assemble_shabad_mixed_sources_degrades_to_ssk():
+    # If any verse was translated only via SSK fallback, the shabad-level
+    # attribution can't claim pure BMS — degrade to "ssk".
+    v1 = _verse_record(gurmukhi="A", translation_bms="A",
+                       translation_source="ms", ang=1, lineNo=1)
+    v2 = _verse_record(gurmukhi="B", translation_bms="B",
+                       translation_source="ssk", ang=1, lineNo=2)
+    shabad = assemble_shabad("42", [v1, v2])
+    assert shabad["translation_source"] == "ssk"
+
+
+def test_assemble_shabad_ignores_empty_translation_verses_for_source():
+    # A verse with an empty translation carries source "" — it must not
+    # corrupt the shabad-level attribution drawn from its sibling verses.
+    v1 = _verse_record(gurmukhi="A", translation_bms="",
+                       translation_source="", ang=1, lineNo=1)
+    v2 = _verse_record(gurmukhi="B", translation_bms="B",
+                       translation_source="ms", ang=1, lineNo=2)
+    shabad = assemble_shabad("42", [v1, v2])
+    assert shabad["translation_source"] == "ms"
+
+
+def test_assemble_shabad_all_empty_translations_yields_empty_source():
+    v1 = _verse_record(gurmukhi="A", translation_bms="",
+                       translation_source="", ang=1, lineNo=1)
+    v2 = _verse_record(gurmukhi="B", translation_bms="",
+                       translation_source="", ang=1, lineNo=2)
+    shabad = assemble_shabad("42", [v1, v2])
+    assert shabad["translation_source"] == ""
+    # validate_shabad must then reject this — downstream CLI skips it.
+    assert any(
+        "translation_source" in p for p in validate_shabad({**shabad, "translation_bms": ""})
+    ) or any(
+        "empty translation_bms" in p for p in validate_shabad({**shabad, "translation_bms": ""})
+    )
+
+
+# ---------- validation ----------
+
+def test_validate_shabad_accepts_ssk_source():
+    rec = _valid_shabad(translation_source="ssk")
+    assert validate_shabad(rec) == []
+
+
+def test_validate_shabad_rejects_missing_translation_source():
+    rec = _valid_shabad()
+    rec.pop("translation_source")
+    problems = validate_shabad(rec)
+    assert any("translation_source" in p for p in problems)
+
+
+def test_validate_shabad_rejects_unknown_translation_source():
+    rec = _valid_shabad(translation_source="bdb")
+    problems = validate_shabad(rec)
+    assert any("translation_source" in p for p in problems)

@@ -25,6 +25,15 @@ CREATE TABLE IF NOT EXISTS public.shabads (
     gurmukhi_display text NOT NULL,
     transliteration  text NOT NULL DEFAULT '',
     translation_bms  text NOT NULL,
+    -- Attribution for the English text in translation_bms. BaniDB ships
+    -- Bhai Manmohan Singh ("ms") for ~96% of SGGS; the remaining ~4% fall
+    -- back to Sant Singh Khalsa ("ssk"). The column name translation_bms
+    -- is preserved as a legacy artifact — the ingestion pipeline made this
+    -- explicit before BaniDB's incomplete BMS coverage was observed in the
+    -- wild. Consult translation_source at render time when citing a
+    -- translator in UI attribution.
+    translation_source text NOT NULL
+        CHECK (translation_source IN ('ms', 'ssk')),
     ang              int  NOT NULL CHECK (ang BETWEEN 1 AND 1430),
     author           text NOT NULL DEFAULT '',
     raag             text NOT NULL DEFAULT '',
