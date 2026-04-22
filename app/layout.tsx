@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Gurmukhi } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +10,17 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// U9: Noto Sans Gurmukhi — used by ScriptureBlock (U10) and the shabad
+// detail page (U12). Exposed as a CSS variable so downstream components
+// just reference `var(--font-gurmukhi)` or the `.font-gurmukhi` utility.
+// Falls back to system Gurmukhi fonts if the webfont fails to load.
+const notoGurmukhi = Noto_Sans_Gurmukhi({
+  variable: "--font-gurmukhi",
+  subsets: ["gurmukhi", "latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,9 +37,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoGurmukhi.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+        {children}
+      </body>
     </html>
   );
 }
