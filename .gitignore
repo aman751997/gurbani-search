@@ -51,3 +51,5 @@ ingestion/.pytest_cache/
 ingestion/__pycache__/
 ingestion/**/__pycache__/
 ingestion/tests/.pytest_cache/
+ingestion/out/*.log
+ingestion/out/*.bak-prefix

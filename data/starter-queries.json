@@ -1,0 +1,12 @@
+[
+  { "query": "anger", "slug": "anger" },
+  { "query": "seva", "slug": "seva" },
+  { "query": "ego", "slug": "ego" },
+  { "query": "death", "slug": "death" },
+  { "query": "devotion", "slug": "devotion" },
+  { "query": "forgiveness", "slug": "forgiveness" },
+  { "query": "fear", "slug": "fear" },
+  { "query": "love", "slug": "love" },
+  { "query": "doubt", "slug": "doubt" },
+  { "query": "truth", "slug": "truth" }
+]

@@ -12,7 +12,7 @@ origin: docs/brainstorms/v1-requirements.md
 
 Build a semantic search app over the Sri Guru Granth Sahib. Users type a natural-language query in English or Roman-script Punjabi and receive ranked shabads with Gurmukhi, transliteration, English translation, and a 1–2 sentence AI-generated "why this matches" caption. The app ships as two explicit milestones — **v1.0** (north-star only) at W6–7 and **v1.1** (polish) at W8–10.
 
-Stack is fully free-tier except domain (~$1/month total): Next.js on Vercel + Supabase Postgres + Cloudflare Workers AI (BGE-M3 embeddings) + Anthropic Claude 4.5 Haiku (captions). No separate Python backend in production — Python is only used locally for one-time corpus ingestion.
+Stack is fully free-tier (including domain optional until U13): Next.js on Vercel + Supabase Postgres + Cloudflare Workers AI (BGE-M3 embeddings) + **Groq Llama-3.3-70B (captions, dev default)** or **Anthropic Claude 4.5 Haiku (captions, production swap)**. Caption provider is selected via `LLM_PROVIDER` env var, switchable without code changes. No separate Python backend in production — Python is only used locally for one-time corpus ingestion.
 
 ## Problem Frame
 
@@ -83,7 +83,8 @@ No `docs/solutions/` entries exist (new project). Research conducted during brai
 - **HNSW index on pgvector** with `m=16, ef_construction=64`, cosine distance. **Rationale:** corpus is small (~6k rows × up to 2 views), build-time is seconds, HNSW recall is better than IVFFlat at this scale.
 - **Single-view embedding first, multi-view only if eval demands it** — index English translation vectors first, run eval, then add Gurmukhi vectors only if single-view fails to hit targets. **Rationale:** scope-guardian flagged multi-view as premature generality; measure before committing.
 - **Hybrid dense + BM25 retrieval** via `pg_trgm` on Gurmukhi, transliteration, and English columns, combined with vector cosine similarity. Start weight: 70% dense, 30% BM25. **Rationale:** dense alone underperforms on rare-word queries like "haumai"; lexical signal compensates.
-- **Captions generated via Claude 4.5 Haiku with structured-output JSON schema**; schema includes a `confidence` field and an `explanation` field only. The shabad text itself is never in the output schema. **Rationale:** structurally makes it impossible for caption text to accidentally contain shabad-text-shaped output — schema enforces it.
+- **Captions generated via an LLMProvider abstraction** (`lib/caption.ts`) with structured-output JSON schema; schema includes a `confidence` field and an `explanation` field only. The shabad text itself is never in the output schema. **Rationale:** structurally makes it impossible for caption text to accidentally contain shabad-text-shaped output — schema enforces it.
+- **Providers implemented:** `GroqProvider` (dev default, free tier, Llama-3.3-70B, OpenAI-compatible API, JSON mode) and `AnthropicProvider` (production option, Claude 4.5 Haiku, tool-use / structured output). Selected at runtime via `LLM_PROVIDER` env var. All four caption defense layers (validator, prompt delimiter, schema + Gurmukhi guard, substring guard) are provider-agnostic. **Rationale:** start free during dev for zero cost; swap to Claude Haiku before launch by flipping one env var. Also earns a resume bullet ("multi-provider LLM architecture with eval-validated swap").
 - **Starter-query captions pre-computed offline and committed to repo as static JSON** — not generated at request time. 100 captions (10 queries × 10 top results) are all that need human review for v1.0 launch. **Rationale:** collapses the hard gate (R8) from "infinite live captions" to "100 committed captions" — tractable and reviewable.
 - **Live-query captions cached server-side in Postgres**, keyed by `(query_hash, shabad_id)`. TTL: none (cache forever; invalidate manually if prompt changes). **Rationale:** eliminates repeated cost, enables weekly sampling review, builds a corpus of real captions over time.
 - **Streaming result rendering with parallel caption fan-out**: search API returns top 10 results immediately. The caption SSE endpoint fires all 10 Anthropic calls **concurrently** (not serially) and pushes each caption to the client as its Promise resolves. Total wall-time = slowest single call (~1.5–2s) rather than sum (~15s), fitting comfortably within Vercel Hobby's 10s serverless limit. Latency targets: first-result-render ≤1s, all captions complete ≤2.5s. **Rationale:** serial per-result generation would exceed the Vercel 10s duration cap and cause silent truncation of the last 3–4 captions on cache-miss queries — identified as P0-A in the plan review.
@@ -416,7 +417,7 @@ The types enforce this: `ScriptureBlockProps` has no `caption` field and `Captio
 
 - [ ] **U6: Caption generation service**
 
-**Goal:** Library wrapping Anthropic SDK to generate non-paraphrasing captions via Claude 4.5 Haiku using structured output (JSON schema with `explanation` and `confidence` fields). Includes a Postgres-backed cache keyed by `(query_hash, shabad_id)`.
+**Goal:** Library exposing an `LLMProvider` interface with `GroqProvider` (dev default) and `AnthropicProvider` (production swap) implementations. Generates non-paraphrasing captions via structured output (JSON schema with `explanation` and `confidence` fields). Provider selection via `LLM_PROVIDER` env var. Includes a Postgres-backed cache keyed by `(query_hash, shabad_id)`.
 
 **Requirements:** R3
 
