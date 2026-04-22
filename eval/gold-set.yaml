@@ -1,0 +1,678 @@
+# gold-set.yaml — 75-query retrieval-evaluation gold set for Gurbani Search.
+#
+# Each entry:
+#   query:          natural-language query string
+#   query_language: "english" or "roman-punjabi"
+#   relevant:       list of shabad_ids known to be theologically relevant
+#   notes:          (optional) human-readable provenance
+#
+# See eval/README.md for bootstrap methodology + known evaluator-bias caveats
+# + how to contribute refinements via PR.
+- query: anger
+  query_language: english
+  relevant:
+    - "2519"
+    - "1408"
+    - "3722"
+    - "94"
+    - "73"
+  notes: krodh
+- query: love
+  query_language: english
+  relevant:
+    - "786"
+    - "1520"
+    - "1131"
+    - "4595"
+    - "958"
+  notes: prem / divine love
+- query: fear
+  query_language: english
+  relevant:
+    - "2668"
+    - "451"
+    - "3802"
+    - "4670"
+    - "2943"
+  notes: bhau / trepidation
+- query: ego
+  query_language: english
+  relevant:
+    - "2155"
+    - "1706"
+    - "2230"
+    - "4886"
+    - "343"
+  notes: haumai
+- query: humility
+  query_language: english
+  relevant:
+    - "4937"
+    - "5332"
+    - "5019"
+    - "1729"
+    - "2379"
+  notes: nimrata
+- query: greed
+  query_language: english
+  relevant:
+    - "72"
+    - "1613"
+    - "1343"
+    - "498"
+    - "4490"
+  notes: lobh
+- query: lust
+  query_language: english
+  relevant:
+    - "4945"
+    - "4219"
+    - "4240"
+    - "4961"
+    - "916"
+  notes: kaam
+- query: attachment
+  query_language: english
+  relevant:
+    - "2518"
+    - "910"
+    - "2099"
+    - "223"
+    - "1667"
+  notes: moh
+- query: compassion
+  query_language: english
+  relevant:
+    - "3580"
+    - "4220"
+    - "2605"
+    - "866"
+    - "3687"
+  notes: daya
+- query: patience
+  query_language: english
+  relevant:
+    - "5321"
+    - "5323"
+    - "5322"
+    - "38"
+    - "1897"
+  notes: dheeraj
+- query: contentment
+  query_language: english
+  relevant:
+    - "311"
+    - "28"
+    - "5399"
+    - "205"
+    - "426"
+  notes: santokh
+- query: gratitude
+  query_language: english
+  relevant:
+    - "97"
+    - "2565"
+    - "630"
+    - "687"
+    - "3148"
+  notes: shukraana
+- query: death
+  query_language: english
+  relevant:
+    - "5351"
+    - "4997"
+    - "5194"
+    - "5511"
+    - "2927"
+  notes: maran
+- query: birth
+  query_language: english
+  relevant:
+    - "4998"
+    - "523"
+    - "5282"
+    - "3723"
+    - "1325"
+  notes: janam
+- query: karma
+  query_language: english
+  relevant:
+    - "4531"
+    - "729"
+    - "4881"
+    - "1784"
+    - "4128"
+  notes: karam / deeds
+- query: rebirth
+  query_language: english
+  relevant:
+    - "787"
+    - "3214"
+    - "3792"
+    - "4998"
+    - "1340"
+  notes: aavan-jaavan
+- query: liberation
+  query_language: english
+  relevant:
+    - "25"
+    - "1483"
+    - "3299"
+    - "3342"
+    - "4070"
+  notes: mukti
+- query: salvation
+  query_language: english
+  relevant:
+    - "3963"
+    - "845"
+    - "5218"
+    - "932"
+    - "1080"
+  notes: mokh
+- query: forgiveness
+  query_language: english
+  relevant:
+    - "2478"
+    - "708"
+    - "5123"
+    - "2617"
+    - "4849"
+  notes: khima
+- query: truth
+  query_language: english
+  relevant:
+    - "2168"
+    - "1710"
+    - "2888"
+    - "1178"
+    - "1159"
+  notes: sach
+- query: falsehood
+  query_language: english
+  relevant:
+    - "425"
+    - "2445"
+    - "1714"
+    - "1138"
+    - "2956"
+  notes: kur / jhooth
+- query: honesty
+  query_language: english
+  relevant:
+    - "381"
+    - "1876"
+    - "172"
+    - "4457"
+    - "2530"
+- query: devotion
+  query_language: english
+  relevant:
+    - "474"
+    - "2648"
+    - "340"
+    - "323"
+    - "1420"
+  notes: bhakti
+- query: faith
+  query_language: english
+  relevant:
+    - "3580"
+    - "14"
+    - "3946"
+    - "5408"
+    - "258"
+  notes: bharosa
+- query: doubt
+  query_language: english
+  relevant:
+    - "839"
+    - "5170"
+    - "522"
+    - "1367"
+    - "75"
+  notes: bharam
+- query: meditation
+  query_language: english
+  relevant:
+    - "878"
+    - "3598"
+    - "3643"
+    - "874"
+    - "875"
+  notes: dhyaan
+- query: prayer
+  query_language: english
+  relevant:
+    - "3209"
+    - "3077"
+    - "5280"
+    - "2882"
+    - "5260"
+  notes: ardas
+- query: surrender
+  query_language: english
+  relevant:
+    - "5171"
+    - "2017"
+    - "2467"
+    - "3047"
+    - "2311"
+- query: grace
+  query_language: english
+  relevant:
+    - "1642"
+    - "1396"
+    - "748"
+    - "3782"
+    - "922"
+  notes: nadar / kirpa
+- query: blessing
+  query_language: english
+  relevant:
+    - "3453"
+    - "4089"
+    - "5442"
+    - "2690"
+    - "3319"
+- query: naam
+  query_language: english
+  relevant:
+    - "3610"
+    - "4152"
+    - "327"
+    - "4155"
+    - "2678"
+  notes: the Name
+- query: guru
+  query_language: english
+  relevant:
+    - "755"
+    - "3658"
+    - "1675"
+    - "1668"
+    - "471"
+  notes: the Guru
+- query: god
+  query_language: english
+  relevant:
+    - "2251"
+    - "249"
+    - "4798"
+    - "2107"
+    - "3950"
+  notes: Ik Onkar / Hari
+- query: the one creator
+  query_language: english
+  relevant:
+    - "2719"
+    - "3406"
+    - "2936"
+    - "203"
+    - "3227"
+- query: hypocrisy
+  query_language: english
+  relevant:
+    - "832"
+    - "242"
+    - "2403"
+    - "1737"
+    - "4678"
+  notes: pakhand
+- query: service
+  query_language: english
+  relevant:
+    - "3047"
+    - "1951"
+    - "2421"
+    - "1003"
+    - "1736"
+  notes: seva
+- query: sangat
+  query_language: english
+  relevant:
+    - "2283"
+    - "2566"
+    - "1369"
+    - "280"
+    - "4826"
+  notes: the company of the holy
+- query: sharing
+  query_language: english
+  relevant:
+    - "140"
+    - "3962"
+    - "3375"
+    - "823"
+    - "4967"
+  notes: vand chhakna
+- query: wisdom
+  query_language: english
+  relevant:
+    - "1356"
+    - "5415"
+    - "4474"
+    - "3598"
+    - "3015"
+  notes: giaan
+- query: ignorance
+  query_language: english
+  relevant:
+    - "5351"
+    - "4531"
+    - "3761"
+    - "1096"
+    - "1292"
+  notes: agiaan
+- query: suffering
+  query_language: english
+  relevant:
+    - "5296"
+    - "1207"
+    - "4540"
+    - "3699"
+    - "5407"
+  notes: dukh
+- query: joy
+  query_language: english
+  relevant:
+    - "4931"
+    - "4974"
+    - "5089"
+    - "197"
+    - "3027"
+  notes: sukh
+- query: worldly attachment
+  query_language: english
+  relevant:
+    - "2518"
+    - "910"
+    - "2099"
+    - "3531"
+    - "4957"
+  notes: maya
+- query: illusion
+  query_language: english
+  relevant:
+    - "3917"
+    - "1323"
+    - "366"
+    - "4930"
+    - "2807"
+  notes: maya
+- query: peace of mind
+  query_language: english
+  relevant:
+    - "4804"
+    - "164"
+    - "1648"
+    - "4182"
+    - "860"
+- query: remembrance of god
+  query_language: english
+  relevant:
+    - "1524"
+    - "3241"
+    - "1607"
+    - "879"
+    - "1389"
+  notes: simran
+- query: the Beloved
+  query_language: english
+  relevant:
+    - "2296"
+    - "1131"
+    - "4595"
+    - "2291"
+    - "2295"
+- query: light within
+  query_language: english
+  relevant:
+    - "3756"
+    - "3416"
+    - "69"
+    - "4605"
+    - "137"
+  notes: jyot
+- query: one god
+  query_language: english
+  relevant:
+    - "3406"
+    - "4903"
+    - "1041"
+    - "2722"
+    - "2442"
+- query: divine word
+  query_language: english
+  relevant:
+    - "2487"
+    - "38"
+    - "4097"
+    - "5"
+    - "177"
+  notes: shabad / bani
+- query: haumai
+  query_language: roman-punjabi
+  relevant:
+    - "3739"
+    - "1987"
+    - "3834"
+    - "5325"
+    - "3658"
+  notes: ego
+- query: simran
+  query_language: roman-punjabi
+  relevant:
+    - "2472"
+    - "4828"
+    - "4880"
+    - "2260"
+    - "5451"
+  notes: remembrance
+- query: waheguru
+  query_language: roman-punjabi
+  relevant:
+    - "4967"
+    - "2547"
+    - "3969"
+    - "2013"
+    - "2412"
+  notes: divine name
+- query: krodh
+  query_language: roman-punjabi
+  relevant:
+    - "3157"
+    - "4843"
+    - "3501"
+    - "853"
+    - "373"
+  notes: anger
+- query: daya
+  query_language: roman-punjabi
+  relevant:
+    - "5540"
+    - "1399"
+    - "50"
+    - "1807"
+    - "5048"
+  notes: compassion
+- query: prem
+  query_language: roman-punjabi
+  relevant:
+    - "198"
+    - "4494"
+    - "958"
+    - "4913"
+    - "1520"
+  notes: love
+- query: naam
+  query_language: roman-punjabi
+  relevant:
+    - "2254"
+    - "886"
+    - "4452"
+    - "4434"
+    - "5537"
+  notes: the Name
+- query: seva
+  query_language: roman-punjabi
+  relevant:
+    - "1951"
+    - "3047"
+    - "2421"
+    - "1736"
+    - "2451"
+  notes: service
+- query: bhakti
+  query_language: roman-punjabi
+  relevant:
+    - "2451"
+    - "3568"
+    - "1284"
+    - "1903"
+    - "3529"
+  notes: devotion
+- query: santokh
+  query_language: roman-punjabi
+  relevant:
+    - "4826"
+    - "2713"
+    - "3659"
+    - "1089"
+    - "3394"
+  notes: contentment
+- query: sach
+  query_language: roman-punjabi
+  relevant:
+    - "1172"
+    - "2301"
+    - "2260"
+    - "3741"
+    - "2853"
+  notes: truth
+- query: maya
+  query_language: roman-punjabi
+  relevant:
+    - "3746"
+    - "3715"
+    - "4536"
+    - "3723"
+    - "4690"
+  notes: illusion
+- query: mukti
+  query_language: roman-punjabi
+  relevant:
+    - "1209"
+    - "857"
+    - "565"
+    - "4870"
+    - "1116"
+  notes: liberation
+- query: kirpa
+  query_language: roman-punjabi
+  relevant:
+    - "2712"
+    - "1951"
+    - "2478"
+    - "2421"
+    - "1755"
+  notes: grace
+- query: nadar
+  query_language: roman-punjabi
+  relevant:
+    - "2823"
+    - "261"
+    - "2659"
+    - "540"
+    - "2911"
+  notes: glance of grace
+- query: lobh
+  query_language: roman-punjabi
+  relevant:
+    - "4240"
+    - "3148"
+    - "5524"
+    - "802"
+    - "4945"
+  notes: greed
+- query: kaam
+  query_language: roman-punjabi
+  relevant:
+    - "3658"
+    - "3966"
+    - "4235"
+    - "5159"
+    - "5102"
+  notes: lust
+- query: moh
+  query_language: roman-punjabi
+  relevant:
+    - "3257"
+    - "780"
+    - "4153"
+    - "4968"
+    - "352"
+  notes: attachment
+- query: nimrata
+  query_language: roman-punjabi
+  relevant:
+    - "1667"
+    - "2277"
+    - "4825"
+    - "1314"
+    - "3743"
+  notes: humility
+- query: giaan
+  query_language: roman-punjabi
+  relevant:
+    - "4540"
+    - "134"
+    - "4716"
+    - "3595"
+    - "2296"
+  notes: wisdom
+- query: agiaan
+  query_language: roman-punjabi
+  relevant:
+    - "5540"
+    - "1493"
+    - "3145"
+    - "4226"
+    - "265"
+  notes: ignorance
+- query: bharam
+  query_language: roman-punjabi
+  relevant:
+    - "3485"
+    - "1406"
+    - "1599"
+    - "4041"
+    - "1407"
+  notes: doubt
+- query: sangat
+  query_language: roman-punjabi
+  relevant:
+    - "4954"
+    - "2481"
+    - "4099"
+    - "5287"
+    - "932"
+  notes: holy company
+- query: ardas
+  query_language: roman-punjabi
+  relevant:
+    - "1951"
+    - "2487"
+    - "2712"
+    - "4278"
+    - "4950"
+  notes: prayer
+- query: shabad
+  query_language: roman-punjabi
+  relevant:
+    - "1327"
+    - "5430"
+    - "2487"
+    - "1693"
+    - "1118"
+  notes: divine word
