@@ -260,7 +260,7 @@ const invokedDirectly = (() => {
 if (invokedDirectly) {
   (async () => {
     const deps = await buildProductionDeps();
-    const result = await main(deps);
+    const result = await main(deps, { delayMs: 1500 });
     // eslint-disable-next-line no-console
     console.log(
       `\nDone. Queries: ${result.totalQueries}, captions: ${result.totalCaptionsGenerated}, provider calls: ${result.totalProviderCalls}, cache hits: ${result.totalCacheHits}, guard triggers: ${result.totalGuardTriggers}`,

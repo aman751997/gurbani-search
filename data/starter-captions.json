@@ -1012,7 +1012,7 @@
         "caption": {
           "explanation": "This shabad expresses a personal struggle with the fear of death and seeking refuge in the Lord.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1028,7 +1028,7 @@
         "caption": {
           "explanation": "This shabad explores the concept of fear, specifically the fear of God, as a means to overcome other fears, including the fear of death.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1044,7 +1044,7 @@
         "caption": {
           "explanation": "This shabad touches on fear as a natural response to the world's challenges, yet finds solace in the Lord.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1060,7 +1060,7 @@
         "caption": {
           "explanation": "This shabad explores the concept of fear as a means to attain spiritual growth and salvation.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1076,7 +1076,7 @@
         "caption": {
           "explanation": "This shabad explores the role of fear in devotion",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1092,7 +1092,7 @@
         "caption": {
           "explanation": "This shabad explores the concept of fear and its impact on human life, highlighting the distinction between worldly fear and fear of the Lord.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1108,7 +1108,7 @@
         "caption": {
           "explanation": "This shabad explores the concept of fear as a universal force that governs all creation.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1124,7 +1124,7 @@
         "caption": {
           "explanation": "This shabad addresses the fear of death that persists across many births.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1140,7 +1140,7 @@
         "caption": {
           "explanation": "This shabad explores the concept of fear in relation to the Lord, describing how all creation is in His fear, except the Lord Himself.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1156,7 +1156,7 @@
         "caption": {
           "explanation": "This shabad touches on overcoming fear, specifically the fear of death, through a sense of acceptance and surrender.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       }
     ]
@@ -1178,7 +1178,7 @@
         "caption": {
           "explanation": "This shabad touches on the effacement of love for another",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1194,7 +1194,7 @@
         "caption": {
           "explanation": "This shabad explores the transformative power of the Lord's love.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1210,7 +1210,7 @@
         "caption": {
           "explanation": "This shabad touches on the love of the Divine Beloved.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1226,7 +1226,7 @@
         "caption": {
           "explanation": "This shabad explores the depth of love for the Divine Beloved.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1243,7 +1243,7 @@
           "explanation": null,
           "confidence": "low",
           "source": "guard",
-          "guardTriggered": "substring"
+          "guardTriggered": "provider-error"
         }
       },
       {
@@ -1259,7 +1259,7 @@
         "caption": {
           "explanation": "This shabad expresses a longing to nurture love through spiritual connection",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1275,7 +1275,7 @@
         "caption": {
           "explanation": "This shabad touches on experiencing God's love",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1291,7 +1291,7 @@
         "caption": {
           "explanation": "This shabad touches on loving the one Beloved",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1307,7 +1307,7 @@
         "caption": {
           "explanation": "This shabad expresses the joy of loving devotion to God.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1323,7 +1323,7 @@
         "caption": {
           "explanation": "This shabad touches on loving the Lord, aligning with the theme of love.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       }
     ]
@@ -1345,7 +1345,7 @@
         "caption": {
           "explanation": "This shabad addresses doubt as a primary obstacle to spiritual growth.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1361,7 +1361,7 @@
         "caption": {
           "explanation": "This shabad touches on the theme of doubt, mentioning its presence among scholars and adepts.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1377,7 +1377,7 @@
         "caption": {
           "explanation": "This shabad addresses the theme of doubt and its resolution through faith in the all-pervading Lord.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1393,7 +1393,7 @@
         "caption": {
           "explanation": "This shabad touches on the theme of doubt and its persistence in the mind, and the search for a way to dispel it.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1409,7 +1409,7 @@
         "caption": {
           "explanation": "This shabad addresses the issue of doubt and its resolution through the Guru's guidance.",
           "confidence": "high",
-          "source": "llm"
+          "source": "cache"
         }
       },
       {
@@ -1423,10 +1423,9 @@
         "author": "Guru Arjan Dev Ji",
         "raag": "Raag Aasaa",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad addresses overcoming doubt through meditation and the Name's love.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
@@ -1440,10 +1439,9 @@
         "author": "Bhagat Kabeer Ji",
         "raag": "Raag Bilaaval",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad touches on the theme of doubt and its removal through the Guru's guidance.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
@@ -1457,10 +1455,9 @@
         "author": "Guru Arjan Dev Ji",
         "raag": "Raag Gujri",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad addresses the demolition of doubt by the True Guru.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
@@ -1474,10 +1471,9 @@
         "author": "Guru Arjan Dev Ji",
         "raag": "Raag Aasaa",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad touches on the theme of doubt as a spiritual obstacle and the importance of seeking refuge in the Lord to overcome it.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
@@ -1491,10 +1487,9 @@
         "author": "Guru Arjan Dev Ji",
         "raag": "Raag Gauree",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad touches on the theme of doubt and its removal through meeting the Master with the Guru's guidance.",
+          "confidence": "high",
+          "source": "cache"
         }
       }
     ]
@@ -1514,10 +1509,9 @@
         "author": "Guru Amar Daas Ji",
         "raag": "Raag Vadhans",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad emphasizes the importance of truth in achieving spiritual growth and union with God.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
@@ -1531,10 +1525,9 @@
         "author": "Guru Nanak Dev Ji",
         "raag": "Raag Aasaa",
         "caption": {
-          "explanation": null,
-          "confidence": "low",
-          "source": "guard",
-          "guardTriggered": "provider-error"
+          "explanation": "This shabad explores the concept of truth and its attainment through the True Guru.",
+          "confidence": "high",
+          "source": "cache"
         }
       },
       {
