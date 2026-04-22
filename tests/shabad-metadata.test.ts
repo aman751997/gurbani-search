@@ -59,7 +59,7 @@ describe("generateMetadata", () => {
     expect(meta.description).toContain("Ang 658");
     expect(meta.openGraph).toBeTruthy();
     expect(meta.openGraph!.url).toBe("/shabad/2519");
-    expect(meta.openGraph!.type).toBe("article");
+    expect((meta.openGraph as unknown as { type?: string }).type).toBe("article");
   });
 
   it("truncates a long translation to <=80-ish chars for og:title", async () => {

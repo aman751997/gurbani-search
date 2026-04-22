@@ -56,8 +56,8 @@ describe("embedQuery — happy path", () => {
 
   it("sends text array + bearer auth", async () => {
     const vec = unitVector();
-    const fetchImpl = vi.fn(async () =>
-      makeResponse({ success: true, result: { data: [vec] } }),
+    const fetchImpl = vi.fn<(url: unknown, init?: RequestInit) => Promise<Response>>(
+      async () => makeResponse({ success: true, result: { data: [vec] } }),
     );
     await embedQuery("hello", { fetchImpl });
     const [url, init] = fetchImpl.mock.calls[0];

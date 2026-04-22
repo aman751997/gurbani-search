@@ -266,7 +266,7 @@ describe("GET /api/caption — streaming", () => {
     });
     const t0 = Date.now();
     const res = await GET(makeReq("anger", "1,2,3,4,5"));
-    const events = await readSSE(res);
+    const events = (await readSSE(res)) as Array<{ done?: boolean; shabadId?: string }>;
     const elapsed = Date.now() - t0;
     // Serial would be 5 × 40ms = 200ms; parallel is ~1 × 40ms = 40ms.
     // Allow a generous ceiling for CI jitter — but clearly < serial total.

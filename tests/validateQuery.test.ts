@@ -28,8 +28,7 @@ describe("validateQuery", () => {
   });
 
   it("rejects a non-string input", () => {
-    // @ts-expect-error intentional bad input
-    const r = validateQuery(42);
+    const r = validateQuery(42 as unknown as string);
     expect(r.ok).toBe(false);
   });
 
