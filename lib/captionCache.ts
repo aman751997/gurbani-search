@@ -24,7 +24,7 @@
 
 import "server-only";
 
-import { createHash } from "node:crypto";
+import { sha256Hex } from "@/lib/sha256";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/db";
 
@@ -76,7 +76,7 @@ export function normalizeQuery(raw: string): string {
  * and to stay forward-compatible.)
  */
 export function queryHash(normalized: string): string {
-  return createHash("sha256").update(normalized, "utf8").digest("hex");
+  return sha256Hex(normalized);
 }
 
 // -----------------------------------------------------------------------------

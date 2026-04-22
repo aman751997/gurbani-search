@@ -53,3 +53,34 @@ if (typeof window !== "undefined") {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// EventSource shim for jsdom.
+//
+// jsdom doesn't implement EventSource. The ResultCardList client component
+// opens one when useSSE=true. Tests don't actually need to EXERCISE the
+// connection — just let the constructor succeed and the cleanup close()
+// be a no-op. Individual tests can inject a richer fake via Object.define
+// if they need to inspect events.
+// ---------------------------------------------------------------------------
+if (typeof globalThis !== "undefined" && typeof (globalThis as unknown as { EventSource?: unknown }).EventSource === "undefined") {
+  class StubEventSource {
+    url: string;
+    readyState = 0;
+    onmessage: ((ev: MessageEvent) => void) | null = null;
+    onerror: ((ev: Event) => void) | null = null;
+    onopen: ((ev: Event) => void) | null = null;
+    constructor(url: string) {
+      this.url = url;
+    }
+    close() {
+      this.readyState = 2;
+    }
+    addEventListener() {}
+    removeEventListener() {}
+    dispatchEvent() {
+      return true;
+    }
+  }
+  (globalThis as unknown as { EventSource: typeof StubEventSource }).EventSource = StubEventSource;
+}
