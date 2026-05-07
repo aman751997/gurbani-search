@@ -3,6 +3,9 @@
 # local docs (plans, brainstorms, launch checklists)
 /docs
 
+# eval results (generated output)
+/eval/results/
+
 # dependencies
 /node_modules
 /.pnp
