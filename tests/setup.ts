@@ -11,7 +11,7 @@ import "@testing-library/jest-dom/vitest";
 //
 // vitest 2 + jsdom 29 sometimes exposes `window.localStorage` as a bare
 // object without Storage.prototype methods (getItem/setItem/removeItem/clear).
-// Component code paths that use localStorage (U9's GurmukhiSizeControl)
+// Component code paths that use localStorage (e.g. GurmukhiSizeControl)
 // would throw TypeError at runtime in tests even though browsers implement
 // the full API.
 //

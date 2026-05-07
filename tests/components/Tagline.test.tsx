@@ -40,7 +40,7 @@ describe("Tagline", () => {
   });
 
   it("exposes a stable canonical string constant", () => {
-    // R5: tagline is the brand promise. Guard against accidental edits.
+    // The tagline is the brand promise. Guard against accidental edits.
     expect(TAGLINE_TEXT).toBe("Finds your Gurbani. Never writes it.");
   });
 });

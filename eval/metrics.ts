@@ -7,7 +7,7 @@
 //   IDCG@k = DCG of the ideal ranking (all relevant items first, up to k)
 //   nDCG@k = DCG@k / IDCG@k
 //
-// Edge cases (documented, tested, and deliberately not throwing):
+// Edge cases (returns 0 instead of throwing):
 //   - empty retrieved list → 0
 //   - empty relevant set → 0 (not NaN — avoid poisoning aggregates)
 //   - relevant items beyond top-k / top-20 → Recall contribution = 0

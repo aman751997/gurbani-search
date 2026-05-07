@@ -1,24 +1,15 @@
 /**
- * Render-path separation contract — the single most important test in v1.0.
+ * Verifies that scripture content (Gurmukhi, transliteration, translation_bms)
+ * and AI-caption content (explanation) flow through disjoint typed prop paths.
  *
- * Enforces, at both the compile-time and runtime layers, the invariant that
- * scripture content (Gurmukhi, transliteration, translation_bms) and
- * AI-caption content (explanation) flow through DISJOINT typed paths.
+ * Compile-time checks use @ts-expect-error to confirm that mixing prop types
+ * is a TypeScript error. Runtime checks confirm that the render layer refuses
+ * explanations containing verbatim scripture runs or Gurmukhi codepoints,
+ * falling back to the no-explanation slot instead of leaking the content.
  *
- * Compile-time (// @ts-expect-error): ScriptureBlockProps has no `caption`
- * field and CaptionBlockProps has no `shabadId`, no `gurmukhi`, no
- * `translation` field. Any attempt to mix is a TypeScript error.
- *
- * Runtime: a malicious caption that contains a 7+ token substring from the
- * shabad's English translation must NOT appear anywhere in the
- * CaptionBlock's rendered DOM. The component drops the explanation and
- * falls back to the no-explanation slot. Similarly, any Gurmukhi
- * codepoint (U+0A00..U+0A7F) in an explanation is refused at render time.
- *
- * These checks are defense-in-depth: the caption library (U6) already
- * enforces both guards before the explanation is committed to the cache,
- * but U10's render layer enforces them again so a direct prop-level
- * mistake still can't leak.
+ * The render-layer guards are a second enforcement point: the caption library
+ * already blocks these before writing to cache, but the component enforces
+ * them again so a direct prop-level mistake still can't leak.
  */
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
@@ -43,7 +34,7 @@ const FIXTURE_SHABAD: ShabadForCard = {
   raag: "Raag Sorath",
 };
 
-describe("render-path separation — compile-time contract", () => {
+describe("caption/scripture prop isolation — compile time", () => {
   it("ScriptureBlockProps rejects a `caption` field at compile time", () => {
     // @ts-expect-error — ScriptureBlock does not accept caption data.
     const _invalid = <ScriptureBlock shabad={FIXTURE_SHABAD} caption={{ explanation: "x", confidence: "high", translationSource: "ms" }} />;
@@ -69,7 +60,7 @@ describe("render-path separation — compile-time contract", () => {
   });
 });
 
-describe("render-path separation — runtime contract (7-token substring guard)", () => {
+describe("caption/scripture prop isolation — runtime 7-token substring guard", () => {
   it("CaptionBlock refuses an explanation that contains a 7+ token run from the shabad translation", () => {
     // Take a verbatim 7-token contiguous window from the translation.
     const maliciousExplanation =
@@ -106,7 +97,7 @@ describe("render-path separation — runtime contract (7-token substring guard)"
   });
 });
 
-describe("render-path separation — Gurmukhi-codepoint guard in CaptionBlock", () => {
+describe("caption/scripture prop isolation — Gurmukhi-codepoint guard in CaptionBlock", () => {
   it("falls back to the no-explanation slot when the explanation contains any Gurmukhi codepoint", () => {
     const maliciousWithGurmukhi = "This shabad ਦੁਲਭ is about rare birth.";
     const { container, getByText } = render(

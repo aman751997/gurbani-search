@@ -372,8 +372,8 @@ describe("generateCaption — full pipeline", () => {
   });
 
   it("instruction-shaped query + refused model response is safe (empty caption treated as marker, no call to guards that would false-fail)", async () => {
-    // Simulates the library being called directly (U1b bypassed). The prompt
-    // instructs the model to emit {"explanation": "", "confidence": "low"},
+    // Simulates the library being called directly with an instruction-shaped
+    // query. The prompt instructs the model to emit {"explanation": "", "confidence": "low"},
     // and the library caches that as a marker. Confirms no crash and no
     // paraphrasing leak.
     const provider = fakeProvider(async () => ({ explanation: "", confidence: "low" }));

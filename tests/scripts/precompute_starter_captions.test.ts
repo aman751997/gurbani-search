@@ -1,4 +1,4 @@
-// Tests for U7 — precompute_starter_captions.
+// Tests for precompute_starter_captions.
 //
 // We exercise main() with fully mocked deps so no network is touched. The
 // real Groq + Supabase invocation is exercised live when the script is run
