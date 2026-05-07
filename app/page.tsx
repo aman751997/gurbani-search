@@ -1,16 +1,3 @@
-// U9: Homepage — server component.
-//
-// Above-the-fold stack:
-//   1. Small top-right Gurmukhi size-control (a11y knob, persists in localStorage)
-//   2. Tagline (h1, the brand promise R5)
-//   3. SearchInput (client component — needs useRouter)
-//   4. One-line explainer clarifying that the app doesn't generate scripture
-//   5. StarterQueryGrid (R6 — 10 text-only tiles linking to /search?q=...)
-//
-// Layout goals: renders cleanly on a 375px-wide mobile viewport with the
-// tagline + input above the fold. No marketing imagery; no feature-grid
-// iconography (design-lens §U9).
-
 import { StarterQueryGrid } from "@/components/StarterQueryGrid";
 import { SearchInput } from "@/components/SearchInput";
 import { Tagline } from "@/components/Tagline";

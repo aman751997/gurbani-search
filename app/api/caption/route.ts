@@ -1,27 +1,21 @@
-// U11: GET /api/caption?q=<query>&shabads=<csv-of-ids>
+// GET /api/caption?q=<query>&shabads=<csv-of-ids>
 //
 // Streams AI captions for up to 10 shabads via Server-Sent Events. Each
-// shabad gets its own `generateCaption` call fired in PARALLEL via
-// Promise.all; each result is pushed to the stream as its Promise
-// resolves. Final event is {done: true}. Connection closes on error
-// with a partial stream (the client handles remaining slots by
-// transitioning them to the no-explanation view).
+// shabad gets its own `generateCaption` call fired in parallel; results
+// are pushed to the stream as each promise resolves. Final event is
+// {done: true}. On error the stream closes with a partial payload — the
+// client transitions remaining slots to the no-explanation view.
 //
-// Runtime: EDGE. Rationale (plan §Key Technical Decisions): Vercel
-// Hobby's Node serverless cap is 10s, which would truncate a serial
-// run of ~10 × 1.5s caption calls. Parallel fan-out + Edge runtime
-// gives us 30s headroom on the same tier.
+// Edge runtime: Vercel Hobby's Node serverless cap is 10s, which would
+// truncate a serial run of ~10 × 1.5s caption calls. Parallel fan-out
+// on Edge gives 30s headroom on the same tier.
 //
-// Security: middleware.ts gates this route with a 60 req/min/IP rate
-// limit and CORS. Query is re-validated here (middleware doesn't read
-// query strings for POST bodies, but also doesn't for GETs — defense
-// in depth).
+// Middleware gates this route with rate-limiting and CORS. The query is
+// re-validated here because middleware doesn't inspect GET query strings.
 //
 // Error contract:
 //   400 — invalid query or invalid shabads param
-//   (no 5xx stream starts — we open the SSE stream and push
-//   per-shabad caption results with guardTriggered flags for failed
-//   generations)
+//   (stream is not opened on 4xx — errors are plain JSON responses)
 
 import type { NextRequest } from "next/server";
 

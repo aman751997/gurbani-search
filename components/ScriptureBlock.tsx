@@ -1,30 +1,9 @@
-// U10: ScriptureBlock — renders the verbatim canonical scripture triad
-// (Gurmukhi, transliteration, English translation) + meta (author, raag,
-// Ang link) and the translation attribution line.
-//
-// RENDER-PATH SEPARATION CONTRACT (R3):
-//   ScriptureBlockProps has NO caption, explanation, or AI-generated
-//   field. The type is structurally disjoint from CaptionBlockProps so
-//   misuse is a TypeScript compile error. See
-//   tests/components/renderPathSeparation.test.tsx for the enforcement.
-//
-// Attributes:
-//   - <div lang="pa">   — Gurmukhi, uses the bundled Noto Sans Gurmukhi
-//   - <div lang="pa-Latn"> — transliteration
-//   - <div lang="en">   — English translation
-//   - <a href="/shabad/{id}"> — deep link for Ang / shabad detail
-//
-// Typography: Gurmukhi line-height is generous (1.8) to accommodate the
-// shirorekha top line. Font-size scales with --gurmukhi-scale (U9 control).
+// Gurmukhi line-height is generous (1.8) to accommodate the shirorekha top
+// line. Font-size scales with --gurmukhi-scale set by GurmukhiSizeControl.
 
 import Link from "next/link";
 import { AttributionLine, type TranslationSource } from "@/components/AttributionLine";
 
-/**
- * Minimal shabad shape required by the scripture block. Deliberately NO
- * `caption` / `explanation` field: mixing caption data in here is
- * forbidden by the render-path separation contract (R3).
- */
 export interface ScriptureBlockShabad {
   shabad_id: string | number;
   gurmukhi_display: string;

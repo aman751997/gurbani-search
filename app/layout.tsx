@@ -12,9 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// U9: Noto Sans Gurmukhi — used by ScriptureBlock (U10) and the shabad
-// detail page (U12). Exposed as a CSS variable so downstream components
-// just reference `var(--font-gurmukhi)` or the `.font-gurmukhi` utility.
+// Exposed as a CSS variable so downstream components reference
+// `var(--font-gurmukhi)` or the `.font-gurmukhi` utility.
 // Falls back to system Gurmukhi fonts if the webfont fails to load.
 const notoGurmukhi = Noto_Sans_Gurmukhi({
   variable: "--font-gurmukhi",

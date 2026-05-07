@@ -1,21 +1,3 @@
-// U11: /search?q=... — server component. Renders 10 ResultCards for a
-// query, with captions streaming in via an SSE-backed client child.
-//
-// Flow:
-//   1. Read ?q=. If missing/invalid, redirect to / (or render a minimal
-//      prompt to search).
-//   2. If q is a STARTER query (case-insensitive match against
-//      data/starter-queries.json), use the pre-computed static captions
-//      from data/starter-captions.json — no SSE, fully SSR.
-//   3. Otherwise, run the hybrid search via lib/embeddings + lib/search
-//      (direct function call, NOT a self-HTTP hop to /api/search). This
-//      returns top-10 shabad rows. Render ResultCards with caption:null
-//      and hand off to the client component which opens SSE.
-//   4. If search itself fails (embedding 503 / RPC error) render the
-//      error state.
-//   5. If search returns 0 rows (unlikely at 5535-shabad corpus but
-//      defensive) render the empty state with 3 starter suggestions.
-
 import { redirect } from "next/navigation";
 
 import { validateQuery } from "@/lib/validateQuery";

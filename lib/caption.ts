@@ -1,36 +1,3 @@
-// Caption generation — public entry point for U6.
-//
-// Pipeline (generateCaption):
-//
-//       query  +  shabad
-//          │
-//          ▼
-//   normalizeQuery  →  queryHash
-//          │
-//          ▼
-//      getCached  ────hit──▶  return cached caption (source: 'cache')
-//          │
-//         miss
-//          │
-//          ▼
-//   provider.generate  ───error──▶  write marker(provider-error), return it
-//          │
-//          ▼
-//     schemaGuard  ─────fail─────▶  write marker(schema), return it
-//          │
-//          ▼
-//   gurmukhiGuard  ─────fail─────▶  write marker(gurmukhi), return it
-//          │
-//          ▼
-//   substringGuard ─────fail─────▶  write marker(substring), return it
-//          │
-//         pass
-//          ▼
-//   write caption, return it (source: 'llm')
-//
-// Provider abstraction (LLMProvider) is stable across Groq and Anthropic.
-// Anthropic is stubbed until U11's production swap; Groq is the dev default.
-
 import "server-only";
 
 import Groq from "groq-sdk";
@@ -52,14 +19,9 @@ import {
 } from "@/lib/captionCache";
 import SYSTEM_PROMPT from "@/lib/captionPrompt";
 
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
-
 /**
- * Minimal shabad fields needed by the caption pipeline. The caller (the
- * future /api/caption route in U11) passes just these fields — not the
- * entire SearchResultRow — so the library has a small typed surface.
+ * Minimal shabad fields needed by the caption pipeline. Callers pass just
+ * these fields rather than the entire SearchResultRow.
  */
 export interface ShabadRow {
   shabad_id: string | number;
@@ -80,10 +42,6 @@ export interface LLMProvider {
 
 // Re-export Caption for convenience — the route layer imports from here.
 export type { Caption, Confidence, GuardTrigger };
-
-// -----------------------------------------------------------------------------
-// Groq provider
-// -----------------------------------------------------------------------------
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const GROQ_TEMPERATURE = 0.3;
@@ -199,15 +157,10 @@ export class GroqProvider implements LLMProvider {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Anthropic provider stub
-// -----------------------------------------------------------------------------
-
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic";
-  // Real implementation deferred. The stub exists so `getProvider()` can
-  // route to it and fail with a clear error if someone flips the env var
-  // before the key is configured.
+  // Stub exists so getProvider() can route to it and fail with a clear
+  // error if someone sets LLM_PROVIDER=anthropic before the key is configured.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generate(_query: string, _shabad: ShabadRow): Promise<RawLlmOutput> {
     throw new Error(
@@ -216,10 +169,6 @@ export class AnthropicProvider implements LLMProvider {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Provider selection
-// -----------------------------------------------------------------------------
-
 let _groqSingleton: GroqProvider | null = null;
 let _anthropicSingleton: AnthropicProvider | null = null;
 
@@ -227,12 +176,8 @@ let _anthropicSingleton: AnthropicProvider | null = null;
  * Resolve the active LLM provider from the environment.
  *
  *   LLM_PROVIDER=groq       → GroqProvider (default)
- *   LLM_PROVIDER=anthropic  → AnthropicProvider stub (throws on call unless
- *                              ANTHROPIC_API_KEY is set, enforced at use time)
- *
- * Anthropic instance is gated behind ANTHROPIC_API_KEY presence: if the
- * selected provider is anthropic but no key is present, constructing the
- * stub is fine but calling generate() throws the clear-error message.
+ *   LLM_PROVIDER=anthropic  → AnthropicProvider stub (throws on generate()
+ *                              unless the key is configured)
  */
 export function getProvider(): LLMProvider {
   const name = (process.env.LLM_PROVIDER ?? "groq").toLowerCase();
@@ -252,10 +197,6 @@ export function __resetProvidersForTests(): void {
   _groqSingleton = null;
   _anthropicSingleton = null;
 }
-
-// -----------------------------------------------------------------------------
-// Public pipeline
-// -----------------------------------------------------------------------------
 
 export interface GenerateCaptionOptions {
   /** Override the provider (tests, future experiments). */
@@ -280,7 +221,7 @@ export async function generateCaption(
   const normalized = normalizeQuery(query);
   const hash = queryHash(normalized);
 
-  // --- Cache read ---------------------------------------------------------
+  // Cache read
   if (!opts.skipCacheRead) {
     try {
       const cached = await getCached(hash, shabad.shabad_id);
@@ -292,7 +233,7 @@ export async function generateCaption(
 
   const provider = opts.provider ?? getProvider();
 
-  // --- Provider call ------------------------------------------------------
+  // Provider call
   let raw: unknown;
   try {
     raw = await provider.generate(normalized, shabad);
@@ -306,7 +247,7 @@ export async function generateCaption(
     );
   }
 
-  // --- Layer 2: schema guard ---------------------------------------------
+  // Schema guard
   const parsed = schemaGuard(raw);
   if (!parsed.ok) {
     return finalizeMarker(hash, shabad.shabad_id, "schema", opts);
@@ -319,19 +260,19 @@ export async function generateCaption(
     return finalizeMarker(hash, shabad.shabad_id, "schema", opts);
   }
 
-  // --- Layer 3: Gurmukhi guard -------------------------------------------
+  // Gurmukhi guard
   const gg = gurmukhiGuard(value.explanation);
   if (!gg.ok) {
     return finalizeMarker(hash, shabad.shabad_id, "gurmukhi", opts);
   }
 
-  // --- Layer 4: substring guard ------------------------------------------
+  // Substring guard
   const sg = substringGuard(value.explanation, shabad.translation_bms ?? "");
   if (!sg.ok) {
     return finalizeMarker(hash, shabad.shabad_id, "substring", opts);
   }
 
-  // --- Success: cache and return -----------------------------------------
+  // Success: cache and return
   const successCaption: Caption = {
     explanation: value.explanation,
     confidence: value.confidence,

@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-// U7 — Pre-compute starter-query captions.
+// Pre-compute starter-query captions.
 //
 // Loads data/starter-queries.json, runs hybrid search for each query against
 // the live Supabase + Cloudflare stack, then calls generateCaption() for each
@@ -10,11 +10,10 @@
 // Idempotent: a second run re-uses captions written to caption_cache, so no
 // new LLM calls are made.
 //
-// Exits non-zero if ANY caption triggered a guard — we want that noise
-// surfaced at commit time, not silently swallowed.
+// Exits non-zero if ANY caption triggered a guard.
 //
-// Designed to be test-friendly: main() accepts injected dependencies so
-// tests can run the full flow with mocked search / caption / fs.
+// main() accepts injected dependencies so tests can run the full flow with
+// mocked search / caption / fs.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -29,9 +28,7 @@ type SearchRow = import("@/lib/search").SearchResultRow;
 type Caption = import("@/lib/caption").Caption;
 type ShabadRow = import("@/lib/caption").ShabadRow;
 
-// -----------------------------------------------------------------------------
 // Types — matches the schema committed to data/starter-captions.json
-// -----------------------------------------------------------------------------
 
 export interface StarterQuery {
   query: string;
@@ -62,9 +59,7 @@ export interface StarterCaptionEntry {
   results: StarterCaptionResult[];
 }
 
-// -----------------------------------------------------------------------------
 // Dependency surface — for testability
-// -----------------------------------------------------------------------------
 
 export interface Deps {
   /** Load the starter-queries JSON. Returns an array of {query, slug}. */
@@ -95,9 +90,6 @@ export interface MainResult {
   guardTriggers: Array<{ query: string; shabad_id: string; trigger: string }>;
 }
 
-// -----------------------------------------------------------------------------
-// Main
-// -----------------------------------------------------------------------------
 
 export async function main(
   deps: Deps,
@@ -195,10 +187,6 @@ export async function main(
     guardTriggers,
   };
 }
-
-// -----------------------------------------------------------------------------
-// Default production deps + CLI entry
-// -----------------------------------------------------------------------------
 
 export const STARTER_QUERIES_PATH = resolve(
   process.cwd(),

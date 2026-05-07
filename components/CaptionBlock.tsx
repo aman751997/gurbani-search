@@ -1,27 +1,3 @@
-// U10: CaptionBlock — renders the AI caption for a given (query, shabad)
-// pair. Deliberately labeled and visually separated from the scripture
-// block (R3).
-//
-// RENDER-PATH SEPARATION CONTRACT (R3):
-//   CaptionBlockProps has NO shabadId, NO gurmukhi_display, NO
-//   transliteration, NO translation_bms. The component cannot receive
-//   scripture text even by accident — it's a TypeScript compile error
-//   (enforced by tests/components/renderPathSeparation.test.tsx) and any
-//   explanation that contains Gurmukhi codepoints or a 7-token substring
-//   of the target translation is refused at runtime in favor of the
-//   no-explanation fallback slot.
-//
-// Visual contract:
-//   - <hr> separator before the block (reader-facing distinction, not just
-//     a tint)
-//   - <h4>AI explanation</h4> with a small sparkle glyph + aria-label
-//   - Explanation text in a sans-serif stack (distinct from the scripture
-//     translation)
-//   - Attribution line: "Written by Claude via Groq. Not Gurbani."
-//   - confidence=low: dotted-underline + tooltip
-//   - explanation=null OR runtime-guard-fail: no-explanation slot with
-//     preserved layout weight
-
 import { useMemo, type ReactElement } from "react";
 
 import {
@@ -32,23 +8,13 @@ import type { TranslationSource } from "@/components/AttributionLine";
 
 export type Confidence = "high" | "medium" | "low";
 
-/**
- * The scripture text fields are STRUCTURALLY FORBIDDEN from appearing in
- * CaptionBlockProps. See renderPathSeparation tests.
- *
- * `scriptureTranslation` IS accepted as an OPTIONAL input — but ONLY as a
- * defense-in-depth guard input: the component uses it to run the
- * substring-guard at render time. It is never rendered. This keeps the
- * runtime guard available at the component boundary without re-opening
- * the caption/scripture-text mixing door.
- */
 export interface CaptionBlockProps {
   explanation: string | null;
   confidence: Confidence;
   translationSource: TranslationSource;
   /**
-   * Optional defense-in-depth: the scripture English translation, used
-   * ONLY as an input to the runtime substring guard. Never rendered.
+   * The scripture English translation, used only as an input to the runtime
+   * substring guard. Never rendered.
    */
   scriptureTranslation?: string;
 }
@@ -62,9 +28,7 @@ function runGuards(
   explanation: string,
   scriptureTranslation?: string,
 ): { ok: true } | { ok: false } {
-  // Layer 3: Gurmukhi-character guard
   if (!gurmukhiGuard(explanation).ok) return { ok: false };
-  // Layer 4: substring guard (only if we have a target to compare)
   if (
     scriptureTranslation &&
     !substringGuard(explanation, scriptureTranslation).ok
@@ -74,12 +38,8 @@ function runGuards(
   return { ok: true };
 }
 
-/**
- * The "sparkle" glyph is a plain unicode star so we avoid bundling an
- * icon library and keep the AI-slop design-lens warning satisfied (no
- * feature-grid sparkle icons on home or results). The glyph is
- * aria-hidden; the parent <h4> text carries the semantic label.
- */
+// Plain unicode star avoids an icon library dependency. aria-hidden because
+// the parent <h4> text carries the semantic label.
 function SparkleGlyph() {
   return (
     <span
@@ -97,9 +57,8 @@ export function CaptionBlock({
   translationSource,
   scriptureTranslation,
 }: CaptionBlockProps): ReactElement {
-  // Runtime defense-in-depth. An explanation that would leak scripture-shaped
-  // content collapses into the no-explanation slot. The raw explanation is
-  // never rendered in that case, not even inside an aria-hidden element.
+  // Explanations that fail guards collapse to null — the no-explanation slot
+  // renders instead so the raw text is never surfaced.
   const effectiveExplanation = useMemo(() => {
     if (typeof explanation !== "string") return null;
     if (explanation.length === 0) return null;

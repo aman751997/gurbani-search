@@ -1,15 +1,5 @@
-// U9: SearchInput — client component.
-//
-// Controlled <input> + submit button. Submits via useRouter.push() on Enter
-// or on button click. Whitespace-only queries do NOT navigate (empty
-// query is a 400 from /api/search — we short-circuit in the UI to avoid a
-// bad UX round-trip).
-//
-// Accessibility:
-//   - Visible <label htmlFor="q"> (axe-core satisfied).
-//   - autoFocus on mount so keyboard users can start typing immediately.
-//   - aria-describedby wires the subtle explainer beneath the input to the
-//     control for screen-reader context.
+// Whitespace-only queries short-circuit before navigation — /api/search
+// returns 400 for empty queries and the round-trip is a bad UX.
 
 "use client";
 

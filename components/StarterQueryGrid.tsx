@@ -1,14 +1,6 @@
-// U9: StarterQueryGrid — server component.
-//
-// Reads data/starter-queries.json at build time (it's statically imported
-// by Next's bundler) and renders a 2-col mobile / 5-col desktop text-only
-// grid of anchor tiles. Each tile links directly to /search?q={query} so
-// the clickthrough is indistinguishable from typing the query manually —
-// shareable URLs, back-button works, analytics unified.
-//
-// Design-lens guidance (plan §U9): NO icons. Feature-grid iconography is
-// the AI-slop pattern we are explicitly avoiding. Text-only tiles with
-// hover + focus-visible affordances.
+// Text-only tiles — no icons. Each tile links to /search?q={query} so
+// clickthrough URLs are identical to typed searches (shareable, back-button
+// works, analytics unified).
 
 import starterQueries from "@/data/starter-queries.json";
 

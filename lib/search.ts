@@ -1,18 +1,6 @@
-// Hybrid retrieval: dense cosine (70%) + pg_trgm word_similarity BM25-ish (30%)
-// against the English translation. Runs entirely through Supabase PostgREST
-// via the .rpc() call defined in supabase/migrations/0002_search_rpc.sql.
-//
-// This module is the thin glue between:
-//   - the route handler (app/api/search/route.ts)
-//   - the embedding client (lib/embeddings.ts)
-//   - the Supabase client (lib/db.ts)
-//
-// It exposes one function — runHybridSearch — that takes a processed query
-// string (post-transliteration) and a pre-computed embedding vector, and
-// returns the shaped result rows. Separating embedding from search makes
-// both easier to mock in tests.
-//
-// Result shape matches the API contract in app/api/search/route.ts.
+// Hybrid retrieval: dense cosine (70%) + pg_trgm word_similarity (30%)
+// via the search_hybrid RPC defined in supabase/migrations/0002_search_rpc.sql.
+// Embedding and search are separated so each can be mocked independently in tests.
 
 import "server-only";
 

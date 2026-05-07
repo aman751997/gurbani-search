@@ -1,16 +1,11 @@
-// U12: /shabad/[id] — full shabad detail page.
+// /shabad/[id] — full shabad detail page.
 //
-// Renders the verbatim scripture (via ScriptureBlock) with no AI
-// caption — captions are search-context-specific and don't belong on a
-// standalone detail page. Generates per-shabad OpenGraph metadata so
+// Renders verbatim scripture (no AI caption — captions are
+// search-context-specific). Generates per-shabad OpenGraph metadata so
 // shared links surface meaningful previews.
 //
-// Back-link behavior: if the request's Referer header points to our own
-// /search page we route back preserving the query; otherwise fall back
-// to the homepage.
-//
-// Cut-discipline note (plan §U12): v1.0 ships without adjacent shabads.
-// That is U14 in v1.1 and intentionally deferred.
+// Back-link: if the Referer header points to our own /search page we
+// route back preserving the query; otherwise fall back to the homepage.
 
 import type { Metadata } from "next";
 import Link from "next/link";

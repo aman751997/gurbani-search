@@ -1,10 +1,3 @@
-// U9: Tagline.
-//
-// Separate component so downstream pages (U10 result card, U12 shabad detail)
-// can re-render or style around the brand promise without duplicating it.
-// The tagline is the product's brand identity (R5) — it renders as an <h1>
-// above the fold on the homepage, and as a smaller element elsewhere.
-
 import type { ReactNode } from "react";
 
 export interface TaglineProps {

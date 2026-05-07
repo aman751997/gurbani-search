@@ -1,29 +1,13 @@
 // Script detection for user queries.
 //
-// v1.0 supports English + Roman-Punjabi. Gurmukhi-script input is detected and
-// rejected at the route layer (HTTP 422) because retrieval on Gurmukhi queries
-// is deferred — the single embedding view is over BMS English translations.
+// Returns one of three tags:
+//   "gurmukhi"     — any codepoint in U+0A00..U+0A7F (rejected at route layer)
+//   "roman-punjabi"— ASCII-only, no English stopword, and either a dict hit
+//                    or a strong bigram ratio
+//   "english"      — everything else
 //
-// Detection is cheap and deterministic:
-//   1. If ANY codepoint in U+0A00..U+0A7F appears                → "gurmukhi"
-//   2. Else if ASCII-only AND no English stopword appears AND
-//      either (a) any token is a known Roman-Punjabi dict entry
-//      or (b) the Punjabi-bigram score clears the threshold       → "roman-punjabi"
-//   3. Else                                                        → "english"
-//
-// Bigram scoring: we look for bigrams that are common in romanized Punjabi
-// transliterations and rare in ordinary English. A small curated list keeps
-// the rule surface auditable and avoids shipping a full n-gram model. The
-// dict-lookup leg of the rule exists because short transliterated tokens
-// (e.g. "simran" — si,im,mr,ra,an) have no distinctive bigram signal; the
-// curated 240-token dict is our ground truth for "known Roman-Punjabi".
-//
-// The detector has ZERO network I/O and no heavy dependencies — safe to run
-// per request on the Edge runtime.
-//
-// Callers should branch on the returned tag. English queries proceed to the
-// embedding step raw; Roman-Punjabi queries go through the 200-token
-// transliteration dict before embedding.
+// No network I/O — safe to call per-request on the Edge runtime.
+// Dict-lookup handles short tokens like "simran" whose bigrams aren't distinctive.
 
 import romanPunjabiDict from "@/data/romanpunjabi-dict.json";
 
@@ -33,20 +17,9 @@ const DICT_KEYS: ReadonlySet<string> = new Set(
   Object.keys(romanPunjabiDict as Record<string, string>),
 );
 
-/**
- * Bigrams that are strongly Punjabi-romanization signals. Each one is rare
- * or impossible in standard English text, and common in the transliterated
- * Gurbani vocabulary (see lib/transliterate.ts for the 200-token dict).
- *
- * The list is intentionally SHORT. A longer list increases false positives
- * (e.g. "oo" appears in "too"/"book" and is a terrible signal).
- */
-// Bigrams that are STRONG Roman-Punjabi signals and rare in standard English.
-// We deliberately omit bigrams that appear frequently in English (th, sh, ch,
-// ee, oo, ng, er, ai — the last two show up in "anger", "rain", etc.). The
-// dict-lookup leg handles tokens whose romanization lacks a distinctive
-// bigram (e.g. "simran", "gurbani"). Bigrams only carry the weight for
-// novel/rare Roman-Punjabi words that aren't in the dict.
+// Strong Roman-Punjabi bigram signals, rare in standard English.
+// Intentionally short — "oo", "th", "sh", "ch", "er", "ai" are omitted
+// because they appear in common English words like "anger" or "rain".
 const PUNJABI_BIGRAMS: readonly string[] = [
   "aa",
   "kh",
@@ -174,21 +147,13 @@ function punjabiBigramRatio(tokens: readonly string[]): number {
 }
 
 /**
- * Heuristic: Roman-Punjabi if the query is ASCII-only, has no pure-English
- * stopwords (after case-fold), and EITHER a token is in the known
- * Roman-Punjabi dictionary OR the bigram ratio clears the threshold.
- *
- * A single word like "haumai" returns true (dict hit). "simran" also returns
- * true via the dict even though its bigrams aren't distinctive. A sentence
- * like "what is grace" returns false because of the stopword "what" (and
- * "is"). "anger" returns false: not in the dict, and the tightened bigram
- * list no longer scores it.
+ * Heuristic: Roman-Punjabi if ASCII-only, no English stopwords, and either a
+ * token is in the dict or the bigram ratio clears the threshold.
  */
 function looksRomanPunjabi(s: string): boolean {
   const trimmed = s.trim();
   if (trimmed.length === 0) return false;
-  // ASCII-only gate: any non-ASCII rules this out (could be Hindi, emoji,
-  // accented romanization, etc — all deferred for v1.0).
+  // Any non-ASCII (Hindi, emoji, accented chars, etc.) rules this out.
   for (let i = 0; i < trimmed.length; i++) {
     if (trimmed.charCodeAt(i) > 0x7f) return false;
   }
@@ -200,15 +165,11 @@ function looksRomanPunjabi(s: string): boolean {
   for (const t of tokens) {
     if (ENGLISH_STOPWORDS.has(t)) return false;
   }
-  // Dict lookup is our highest-confidence Roman-Punjabi signal — any token
-  // in the curated 240-entry transliteration dict makes the query
-  // Roman-Punjabi by construction (see data/romanpunjabi-dict.json).
+  // Dict lookup is the highest-confidence signal — any hit means Roman-Punjabi.
   for (const t of tokens) {
     if (DICT_KEYS.has(t)) return true;
   }
-  // Fall back to bigram ratio for novel Roman-Punjabi tokens not in the
-  // dict. The tightened bigram list deliberately excludes common English
-  // bigrams so short English words like "anger" don't false-positive.
+  // Fall back to bigram ratio for tokens not in the dict.
   const ratio = punjabiBigramRatio(tokens);
   return ratio >= 0.2;
 }

@@ -1,8 +1,3 @@
-// U10: AttributionLine — translation-source attribution for the scripture
-// block. Rendered inside ScriptureBlock so every shabad card is
-// transparently attributed. Kept as a separate component so the label text
-// and styling live in one place.
-
 import type { ReactElement } from "react";
 
 export type TranslationSource = "ms" | "ssk";

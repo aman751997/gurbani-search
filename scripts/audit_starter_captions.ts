@@ -62,9 +62,7 @@ interface AuditRow {
   notes: string[];
 }
 
-// ---------------------------------------------------------------------------
 // Tokenization — lowercase, split on non-alphanumerics, drop empties.
-// ---------------------------------------------------------------------------
 
 function tokenize(s: string): string[] {
   return s
@@ -73,9 +71,7 @@ function tokenize(s: string): string[] {
     .filter((t) => t.length > 0);
 }
 
-// ---------------------------------------------------------------------------
 // H1 — contiguous 4-gram overlap
-// ---------------------------------------------------------------------------
 
 function ngrams(tokens: string[], n: number): string[] {
   const out: string[] = [];
@@ -96,9 +92,7 @@ function h1_overlap4(caption: string, translation: string): string | null {
   return null;
 }
 
-// ---------------------------------------------------------------------------
 // H2 — quoted run of >=3 tokens
-// ---------------------------------------------------------------------------
 
 function h2_longQuote(caption: string): string | null {
   // Match "..." or '...' — non-greedy. Report first hit whose token count >= 3.
@@ -111,10 +105,8 @@ function h2_longQuote(caption: string): string | null {
   return null;
 }
 
-// ---------------------------------------------------------------------------
 // H3 — loose paraphrase signal (>=5 caption tokens appear in order in
 // translation with at most 1 gap token between consecutive matches).
-// ---------------------------------------------------------------------------
 
 function h3_paraphrase(caption: string, translation: string): string | null {
   const cap = tokenize(caption);
@@ -162,18 +154,12 @@ function h3_paraphrase(caption: string, translation: string): string | null {
   return best >= 5 ? bestRun.join(" ") : null;
 }
 
-// ---------------------------------------------------------------------------
 // H4 — Gurmukhi codepoints
-// ---------------------------------------------------------------------------
 
 function h4_gurmukhi(caption: string): string | null {
   const m = caption.match(/[\u0A00-\u0A7F]/u);
   return m ? m[0] : null;
 }
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
 
 async function main() {
   const capPath = resolve(process.cwd(), "data/starter-captions.json");
@@ -242,7 +228,6 @@ async function main() {
     }
   }
 
-  // ---------------- Markdown report -----------------
   const today = new Date().toISOString();
   const lines: string[] = [];
   lines.push(`# Starter Captions Audit — ${today}`);
@@ -312,7 +297,7 @@ async function main() {
   lines.push("---");
   lines.push("");
   lines.push(
-    "Heuristics are deliberately conservative. A \"fail\" here is **not proof** that a caption paraphrases scripture — it means the caption shares enough surface with the translation to warrant a human read. The R8 hard gate (README / v1.0 plan §U13) requires you to personally sign off on every caption before launch.",
+    "Heuristics are conservative by design. A \"fail\" here is **not proof** that a caption paraphrases scripture — it means the caption shares enough surface with the translation to warrant a human read. You must personally sign off on every caption before launch.",
   );
   lines.push("");
 

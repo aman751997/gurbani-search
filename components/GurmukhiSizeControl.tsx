@@ -1,18 +1,5 @@
-// U9: GurmukhiSizeControl — client component.
-//
-// Small top-right accessibility control. Cycles the Gurmukhi scale among
-// three presets (S / M / L) that map to a CSS custom property
-// --gurmukhi-scale on <html>. Downstream scripture components apply
-// `font-size: calc(1em * var(--gurmukhi-scale, 1))` or an equivalent
-// utility class.
-//
-// Preference is persisted to localStorage ('gurmukhi-size'). On mount the
-// component rehydrates from storage and mirrors into the CSS variable.
-//
-// The component is intentionally minimal — this is a defensive a11y knob,
-// not a settings panel. No haptics, no animation, no overlay. If the user
-// wants fine-grained control in v1.1, swap to a slider behind this same
-// API.
+// Cycles --gurmukhi-scale on <html> through S/M/L presets. Persists to
+// localStorage so the choice survives page navigation.
 
 "use client";
 

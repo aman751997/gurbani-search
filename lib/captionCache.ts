@@ -4,23 +4,16 @@
 //
 //   caption_cache (
 //     query_hash text,
-//     shabad_id  text,   -- matches shabads.shabad_id (text, not int)
+//     shabad_id  text,   -- TEXT, not int — coerce numbers at the boundary
 //     explanation text NOT NULL DEFAULT '',
 //     confidence  text NOT NULL DEFAULT 'low',
 //     created_at  timestamptz,
 //     PRIMARY KEY (query_hash, shabad_id)
 //   )
 //
-// A row with explanation='' is a no-explanation MARKER — meaning the pair
-// was attempted and any of the four defense layers (schema / Gurmukhi /
-// substring / provider error) rejected it. We cache markers so the same
-// bad (query, shabad) pair is not re-hit on every request.
-//
-// The U6 spec documents shabad_id as INT; the actual schema is TEXT. We
-// follow the schema to preserve FK integrity. If callers pass a number we
-// coerce to string at the boundary.
-//
-// This module is server-only.
+// A row with explanation='' is a no-explanation marker — the pair was
+// attempted and a guard rejected it. Caching markers avoids re-hitting the
+// LLM on every request for the same bad (query, shabad) pair.
 
 import "server-only";
 
@@ -28,30 +21,19 @@ import { sha256Hex } from "@/lib/sha256";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/db";
 
-// -----------------------------------------------------------------------------
-// Query normalization
-// -----------------------------------------------------------------------------
-
-// Trailing punctuation class — remove common "?", "!", ".", etc. at the very
-// end of the query so "anger" and "anger?" cache to the same key. This is
-// conservative: only trailing, Unicode P (punctuation) + S (symbol).
+// Strip trailing punctuation so "anger" and "anger?" map to the same cache key.
 const TRAILING_PUNCT_RE = /[\p{P}\p{S}]+$/u;
 
 /**
- * Normalize a raw user query for cache-key derivation.
+ * Normalize a raw user query for cache-key derivation:
+ *   1. NFC normalization
+ *   2. Lowercase
+ *   3. Collapse whitespace runs to a single space
+ *   4. Trim
+ *   5. Strip trailing punctuation/symbols (repeated until stable)
  *
- *   1. Unicode NFC normalization
- *      — e.g. "café" in NFD form -> "café" in NFC form.
- *   2. Lowercase (Unicode-aware via String.prototype.toLowerCase; for the
- *      query corpus, which is English / Roman-Punjabi, toLowerCase is
- *      deterministic).
- *   3. Collapse any run of whitespace (including NBSP, tabs) to a single
- *      ASCII space.
- *   4. Trim leading + trailing whitespace.
- *   5. Strip trailing punctuation/symbol characters.
- *
- * Spec'd in U6. Changes here invalidate all cached entries, so bump a cache
- * namespace if this function's behavior ever changes.
+ * Changing this function invalidates all existing cached entries — bump the
+ * cache namespace if behavior changes.
  */
 export function normalizeQuery(raw: string): string {
   if (typeof raw !== "string") return "";
@@ -70,28 +52,16 @@ export function normalizeQuery(raw: string): string {
 }
 
 /**
- * SHA-256 hex of the normalized query. Not salted — the value goes into a
- * user-opaque cache key, no security property attaches to it. (We choose
- * SHA-256 over MD5 for availability in the Node stdlib with no extra deps
- * and to stay forward-compatible.)
+ * SHA-256 hex of the normalized query. Not salted — no security property
+ * attaches to this key, it's purely for deduplication.
  */
 export function queryHash(normalized: string): string {
   return sha256Hex(normalized);
 }
 
-// -----------------------------------------------------------------------------
-// Cache row types
-// -----------------------------------------------------------------------------
-
 export type Confidence = "high" | "medium" | "low";
 
-/** Stable identifier for the reason a no-explanation marker was written. */
 export type GuardTrigger = "schema" | "gurmukhi" | "substring" | "provider-error";
-
-/**
- * In-memory caption shape the library returns. NEVER includes scripture
- * text — just the AI explanation and metadata.
- */
 export type Caption =
   | {
       explanation: string;
@@ -105,20 +75,10 @@ export type Caption =
       source: "guard" | "cache";
     };
 
-/**
- * Shape of the cache row after decoding. explanation='' is normalized to
- * `null` + guardTriggered='schema' by default (we don't know the original
- * trigger on read — the marker was written previously with '' as the body,
- * and the guardTriggered reason is not currently persisted in the schema.
- * For the strong "no AI explanation" UX behavior, the trigger identity
- * after a cache hit is not needed — the caller only cares that it's a
- * marker). See writeCached for how markers are persisted.
- */
+// explanation='' on read means a guard previously rejected this pair.
+// The specific guard reason isn't persisted (no column), so we always surface
+// guardTriggered='schema' — callers only need to know it's a no-explanation marker.
 export type CachedCaption = Caption & { source: "cache" };
-
-// -----------------------------------------------------------------------------
-// Read / write helpers
-// -----------------------------------------------------------------------------
 
 export interface CacheOptions {
   /** Injected Supabase client for tests. Defaults to supabaseServer(). */
@@ -131,11 +91,7 @@ function toShabadIdString(id: string | number): string {
 
 /**
  * Look up a cached caption. Returns `null` on cache miss (not an error).
- *
- * A row with explanation='' is returned as a Caption of shape
- * `{ explanation: null, confidence: 'low', guardTriggered: 'schema',
- *    source: 'cache' }`. The caller should treat this identically to a
- * fresh guard-trigger: show the "No AI explanation" slot.
+ * A row with explanation='' is decoded as a no-explanation marker.
  */
 export async function getCached(
   hash: string,
@@ -178,10 +134,9 @@ export async function getCached(
 }
 
 /**
- * Upsert a cached caption. On guard-triggered captions we persist
- * explanation='' so subsequent reads short-circuit; we do NOT currently
- * persist the `guardTriggered` reason (the table schema has no column).
- * If future analytics want it, add a column in a follow-up migration.
+ * Upsert a cached caption. Guard-triggered captions are stored as
+ * explanation='' so subsequent reads short-circuit without hitting the LLM.
+ * The specific guard reason is not persisted (no schema column).
  */
 export async function writeCached(
   hash: string,
@@ -202,10 +157,6 @@ export async function writeCached(
     throw new CacheWriteError(error.message ?? "caption_cache write failed");
   }
 }
-
-// -----------------------------------------------------------------------------
-// Internals — exported for tests via __TEST__
-// -----------------------------------------------------------------------------
 
 function normalizeConfidence(v: unknown): Confidence {
   return v === "high" || v === "medium" || v === "low" ? v : "low";

@@ -1,19 +1,9 @@
 // Cloudflare Workers AI client for BGE-M3 embeddings.
 //
-// This is the QUERY-TIME embedding path — the ingestion pipeline
-// (ingestion/generate_embeddings.py) uses the identical model at the
-// identical endpoint to eliminate cosine-distance drift.
-//
-// Contract:
-//   - embedQuery(text) returns a 1024-dim unit vector (cosine-normalized)
-//   - on HTTP failure / malformed payload throws EmbeddingError — caller
-//     (lib/search.ts / the route handler) maps that to a 503
-//   - no retry here; the plan's single-query embed latency budget is ~150ms
-//     and the caller can decide whether a transient failure deserves a
-//     retry (currently: no — fail fast, show the user an error)
-//
-// An injectable fetch is exported for tests so we never actually hit
-// Cloudflare in CI.
+// embedQuery() returns a 1024-dim L2-normalized vector. The ingestion pipeline
+// uses the same model so there's no cosine-distance drift between index and query.
+// On failure it throws EmbeddingError — the route handler maps that to a 503.
+// Injectable fetch is exported so tests never hit the real API.
 
 import "server-only";
 

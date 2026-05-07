@@ -1,15 +1,7 @@
-// Starter-query fast path helpers.
-//
-// The 10 pre-computed starter queries (data/starter-queries.json) +
-// their cached caption data (data/starter-captions.json) let the
-// homepage clickthrough render fully server-side with no SSE traffic.
-// This library exposes a lookup by normalized query string.
-//
-// Normalization: lowercase + trim. Kept deliberately narrow — we don't
-// want to expand to normalizeQuery() because the starter JSON was
-// authored against the exact starter-queries.json strings and a more
-// aggressive normalization could create surprising matches (e.g.
-// "truth?" matching).
+// Fast path for the pre-computed starter queries (data/starter-captions.json).
+// Lookups are by lowercased+trimmed query string. Normalization is kept narrow
+// intentionally — using normalizeQuery() here could create unexpected matches
+// (e.g. "truth?" hitting a "truth" entry).
 
 import starterCaptions from "@/data/starter-captions.json";
 import starterQueries from "@/data/starter-queries.json";

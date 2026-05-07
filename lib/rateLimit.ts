@@ -1,19 +1,11 @@
 // Upstash Ratelimit wrappers.
 //
-// Two limiters:
-//   - searchLimit:  30 req / min / IP for /api/search   (U5)
-//   - captionLimit: 60 req / min / IP for /api/caption  (U11)
+// Two sliding-window limiters:
+//   - searchLimit:  30 req / min / IP for /api/search
+//   - captionLimit: 60 req / min / IP for /api/caption
 //
-// Both use sliding-window to smooth bursts. Upstash Redis is required at
-// runtime; tests must inject a fake client. We export a factory
-// (`createLimiters`) to make that clean.
-//
-// Environment:
-//   UPSTASH_REDIS_REST_URL
-//   UPSTASH_REDIS_REST_TOKEN
-//
-// Documented in .env.example. These are SERVER-ONLY and must only be read
-// from middleware.ts / route handlers.
+// Tests inject a fake Redis client via createLimiters().
+// Required env vars: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";

@@ -1,19 +1,7 @@
-// U11: ResultCardList — client component that owns the in-flight caption
-// map and renders a list of ResultCards.
-//
 // Two modes:
-//   useSSE=false — starter-query fast path. All captions are already
-//     populated in the `initialResults` prop; no streaming, no state
-//     changes. Still a client component only because ResultCard depends
-//     on lib/captionGuards which is safe either way; could also be a
-//     server component. Kept client-side so the rendering path is the
-//     same shape in both modes (fewer surprises).
-//
-//   useSSE=true — opens an EventSource to /api/caption?q=...&shabads=...
-//     as soon as it mounts, updates per-shabad caption state as SSE
-//     messages arrive. On {done:true} the connection closes; any
-//     shabads without a caption flip to `null` (no-explanation slot).
-//     On SSE error, surfaces a subtle inline toast with a retry button.
+//   useSSE=false — captions are pre-populated in `initialResults`; no streaming.
+//   useSSE=true  — opens EventSource to /api/caption, updates per-shabad state
+//                  as messages arrive, closes on {done:true}, retries on error.
 
 "use client";
 
@@ -102,8 +90,6 @@ export function ResultCardList({
         if (parsed && typeof parsed.shabadId === "string" && parsed.caption) {
           const incoming = parsed.caption;
           setStream((prev) => {
-            // Use the shabad's scripture translation-source as the
-            // authoritative source for the caption attribution.
             const entry = initialResults.find(
               (r) => String(r.shabad.shabad_id) === parsed.shabadId,
             );

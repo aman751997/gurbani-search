@@ -8,14 +8,11 @@
 // Error contract:
 //   400 — validateQuery rejected the input (empty, too long, control char,
 //         injection sigil, etc.). Body: { error: "invalid_query", reason }.
-//   422 — Gurmukhi-script input detected. Body: { error: "gurmukhi_unsupported",
-//         message: "v1.0 does not support Gurmukhi input" }.
+//   422 — Gurmukhi-script input detected. Body: { error: "gurmukhi_unsupported" }.
 //   503 — Cloudflare embedding failed OR Supabase RPC failed. Body:
-//         { error: "service_unavailable" }. Root cause is logged to stderr
-//         (Vercel runtime logs) — NEVER to the database.
+//         { error: "service_unavailable" }. Root cause logged to stderr only.
 //
-// Rate-limiting (30 req/min/IP) runs in middleware.ts; this handler does not
-// re-implement it. CORS headers are also applied by middleware.
+// Rate-limiting and CORS are applied by middleware.ts.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";

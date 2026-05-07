@@ -1,22 +1,9 @@
-/**
- * Supabase client singletons — SERVER-ONLY.
- *
- * Two clients:
- *   - `supabaseServer()`  — uses `SUPABASE_SERVICE_KEY`. Bypasses RLS.
- *                           Use for caption_cache writes and any server-side
- *                           admin query. MUST NOT be imported from a
- *                           `"use client"` module.
- *   - `supabaseAnon()`    — uses `SUPABASE_ANON_KEY`. Subject to RLS.
- *                           Use on server-rendered pages that need to read
- *                           the corpus.
- *
- * Both clients are memoized so repeated calls inside a single serverless
- * invocation share state (cookies, auth context, websocket pool, etc).
- *
- * This module is server-only. The guard below throws if a client bundle
- * somehow imports it — belt-and-suspenders on top of the
- * `server-only` convention.
- */
+// Supabase client singletons — server-only.
+//
+// supabaseServer() — SERVICE KEY, bypasses RLS. Use for caption_cache writes.
+// supabaseAnon()   — ANON KEY, subject to RLS. Use for corpus reads.
+//
+// Both are memoized so repeated calls within a serverless invocation share state.
 import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -37,11 +24,8 @@ function env(name: string, fallback?: string): string {
 }
 
 /**
- * Return a Supabase client authenticated with the SERVICE KEY.
- *
- * Service keys bypass Row Level Security, so this client is the only
- * path for caption_cache writes (the table has no RLS policy for
- * anon/authenticated). NEVER expose this to a client bundle.
+ * Supabase client authenticated with the SERVICE KEY.
+ * Bypasses RLS — the only path for caption_cache writes. Never expose to a client bundle.
  */
 export function supabaseServer(): SupabaseClient {
   if (_server) return _server;
@@ -64,11 +48,8 @@ export function supabaseServer(): SupabaseClient {
 }
 
 /**
- * Return a Supabase client authenticated with the ANON KEY.
- *
- * Reads are subject to Row Level Security. The corpus tables
- * (shabads, shabad_embeddings) expose read-only SELECT policies so this
- * client can serve SSR/ISR pages that surface shabad data to the browser.
+ * Supabase client authenticated with the ANON KEY.
+ * Subject to RLS — corpus tables have read-only SELECT policies.
  */
 export function supabaseAnon(): SupabaseClient {
   if (_anon) return _anon;

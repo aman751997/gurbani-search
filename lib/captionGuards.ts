@@ -1,21 +1,12 @@
-// Programmatic defense layers 2, 3, and 4 for caption generation.
-// (Layer 1 — HTTP-edge validator — lives in lib/validateQuery.ts.)
-//
-// All three guards are pure, deterministic, and synchronous so tests can pin
-// exact input/output behavior. None of them log; the caller decides what to
-// do with a rejection (logging, caching a no-explanation marker, etc).
+// Guards for caption generation output.
+// All three are pure, synchronous, and throw-free — the caller handles rejection.
 
 import { z } from "zod";
 
-// -----------------------------------------------------------------------------
-// Schema guard (layer 2)
-// -----------------------------------------------------------------------------
-
 /**
- * Raw LLM output schema. An empty explanation is allowed — that is the
- * "no-explanation" marker emitted by the model when it cannot produce a
- * safe caption (e.g. instruction-shaped query). A populated explanation
- * is capped at 200 characters per the system prompt.
+ * Raw LLM output schema. An empty explanation is the model's "no-explanation"
+ * marker (e.g. instruction-shaped query). Populated explanations are capped
+ * at 200 characters per the system prompt.
  */
 export const RawLlmOutputSchema = z
   .object({
@@ -44,17 +35,11 @@ export function schemaGuard(raw: unknown): SchemaGuardResult {
   return { ok: false, reason: "schema", detail };
 }
 
-// -----------------------------------------------------------------------------
-// Gurmukhi-character guard (layer 3)
-// -----------------------------------------------------------------------------
-
 /**
  * Reject any explanation containing a codepoint in the Gurmukhi block
- * U+0A00..U+0A7F. No legitimate English caption should ever contain one;
- * if it does, something went wrong upstream.
+ * (U+0A00..U+0A7F). No legitimate English caption should ever contain one.
  *
- * Implementation walks codepoints (not UTF-16 code units) so we correctly
- * handle any future supplementary-plane additions without surprise, even
+ * Walks codepoints rather than UTF-16 code units for correctness, even
  * though the Gurmukhi block is entirely BMP.
  */
 export type GurmukhiGuardResult =
@@ -72,36 +57,15 @@ export function gurmukhiGuard(explanation: string): GurmukhiGuardResult {
   return { ok: true };
 }
 
-// -----------------------------------------------------------------------------
-// Substring guard (layer 4)
-// -----------------------------------------------------------------------------
-
 /**
- * Reject if the explanation contains ANY 7+ token contiguous substring of
- * the target shabad's translation. Token boundaries are the canonical
- * tokenizer below:
+ * Reject if the explanation contains a 7+ token contiguous substring of the
+ * shabad's translation. Tokens are lowercased, split on whitespace, and have
+ * leading/trailing punctuation stripped. Intra-token punctuation is preserved
+ * so "don't" and "dont" are distinct tokens (erring toward fewer false positives).
  *
- *   - lowercase
- *   - split on Unicode whitespace (\s+)
- *   - per-token: strip leading/trailing punctuation (Unicode P class).
- *     Intra-token punctuation (e.g. "don't") is preserved so "don't" and
- *     "dont" are NOT treated as the same token — we err on the side of
- *     LESS matching to keep the guard from false-positive-ing on punctuation
- *     normalization.
- *   - empty tokens dropped
+ * Short-circuits when explanation or translation has fewer than 7 tokens.
  *
- * Documented decision: tokens are compared case-insensitively (via lowercase
- * before tokenization). Both sides go through the same tokenizer so the
- * comparison is symmetric. See the U6 spec — "should tokens be ASCII-
- * normalized first?" resolved YES (lowercase + strip edge punct).
- *
- * Algorithm: O(n * m) rolling-window. For each starting index i in the
- * target token stream (where i + 7 <= m), check if the explanation tokens
- * contain that 7-gram. A 7-gram match anywhere is a rejection.
- *
- * Short-circuit cases:
- *   - empty explanation passes (common: the "" marker from the model)
- *   - target translation with < 7 tokens can never trigger — passes
+ * O(n * m) rolling window — acceptable for the short strings involved.
  */
 
 export const SUBSTRING_THRESHOLD = 7;
@@ -110,8 +74,7 @@ export type SubstringGuardResult =
   | { ok: true }
   | { ok: false; reason: "substring"; overlapStart: number };
 
-// Unicode-aware punctuation strip. \p{P} + \p{S} (symbols) are stripped at
-// the edges. Intra-token punctuation is preserved.
+// \p{P} + \p{S} stripped at token edges only; intra-token punctuation preserved.
 const EDGE_PUNCT_RE = /^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu;
 
 export function tokenizeForSubstringGuard(s: string): string[] {

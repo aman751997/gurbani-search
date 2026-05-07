@@ -1,16 +1,5 @@
-// Pure query validator.
-//
-// Rejects queries that are:
-//   - longer than MAX_LEN (500) chars
-//   - empty / whitespace-only (no printable characters)
-//   - contain C0 control bytes (U+0000..U+001F) OR C1 control bytes (U+007F..U+009F)
-//   - contain any obvious prompt-injection sigil (case-insensitive)
-//
-// Called from middleware.ts and from /api/search, /api/caption route handlers
-// (those land in later units). This module has ZERO runtime dependencies so it
-// is cheap to invoke per-request.
-//
-// Return shape is a tagged union so callers must explicitly branch on `ok`.
+// Pure query validator — no runtime dependencies, safe to call per-request.
+// Returns a tagged union so callers must explicitly branch on `ok`.
 
 export const MAX_QUERY_LEN = 500;
 
@@ -26,15 +15,9 @@ export type ValidationResult =
   | { ok: true; query: string }
   | { ok: false; reason: ValidationReason };
 
-/**
- * Prompt-injection sigils, case-insensitive. These are a coarse first pass —
- * the real defense is the `<user_query>` delimiter block in the caption
- * prompt (U6). Rejecting these at the edge just stops the most obvious
- * adversarial inputs from ever reaching the LLM.
- *
- * Keep this list SHORT and stable — every entry is a fixed substring match,
- * not a regex, to keep the rule surface auditable.
- */
+// Coarse first-pass injection filter. The prompt's <user_query> delimiter
+// is the real protection; this just blocks the most obvious inputs before
+// they reach the LLM. Fixed-string matches keep the rule surface auditable.
 const INJECTION_SIGILS: readonly string[] = [
   "ignore previous",
   "ignore all",

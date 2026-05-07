@@ -1,19 +1,10 @@
 // System prompt for caption generation.
 //
-// This prompt is the second of four caption-defense layers (U6):
-//   1. HTTP-edge validator (U1b)  — middleware rejects obvious injection sigils
-//   2. System-prompt constraints  — THIS FILE
-//   3. Schema + Gurmukhi guard    — lib/captionGuards.ts
-//   4. 7-token substring guard    — lib/captionGuards.ts
+// Exported as a string so test assertions can pin specific phrases.
+// Do NOT rewrite these sentences casually — the test suite pins them.
 //
-// The prompt exists as a single exported string so test assertions can pin
-// individual clauses (e.g. "the non-paraphrasing rule must literally appear
-// in the system prompt"). Do NOT rewrite these sentences casually — the
-// test suite pins specific phrases.
-//
-// Caller wraps the user query in a <user_query>...</user_query> block. The
-// shabad translation is passed as a separate context block so the model
-// never sees the query and the scripture in the same delimiter.
+// The caller wraps the user query in <user_query>...</user_query> and passes
+// the shabad translation in a separate block so the two never share a delimiter.
 
 const SYSTEM_PROMPT = `You are a thematic guide for a Gurbani search app. Your ONLY job is to explain, in 1 to 2 short sentences, WHY a given shabad may be relevant to a user's query — not to restate, paraphrase, translate, or summarize the shabad itself.
 

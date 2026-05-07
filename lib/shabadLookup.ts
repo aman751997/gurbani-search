@@ -1,7 +1,5 @@
-// Single-shabad loader used by the shabad detail page (U12).
-//
-// Uses the anon Supabase client (lib/db) which has read-only RLS on the
-// corpus tables. Returns null on not-found so the page can call notFound().
+// Single-shabad loader for the shabad detail page.
+// Uses the anon Supabase client (read-only RLS). Returns null on not-found.
 
 import "server-only";
 

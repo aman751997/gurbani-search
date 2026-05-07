@@ -7,12 +7,10 @@
 //        - preview / dev: allow "*".
 //      On /api/caption specifically, reject disallowed origins with 403 to
 //      prevent third-party sites from scraping SSE captions.
-//   3. Forward the request otherwise with rate-limit diagnostic headers.
+//   3. Forward the request with rate-limit diagnostic headers.
 //
-// This module runs per-request on Vercel's Edge runtime, so it must be small
-// and dependency-light. It deliberately does NOT validate the query body —
-// that happens inside the route handlers (U5, U11) because middleware on
-// Vercel Edge cannot cleanly read the POST body without consuming it.
+// Does NOT validate the query body — that happens inside the route handlers
+// because Edge middleware cannot read the POST body without consuming it.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -22,10 +20,6 @@ export const config = {
   // Run on every /api/* path. Anything outside /api is untouched.
   matcher: ["/api/:path*"],
 };
-
-// ---------------------------------------------------------------------------
-// CORS helpers
-// ---------------------------------------------------------------------------
 
 function isProd(): boolean {
   return process.env.VERCEL_ENV === "production";
@@ -64,10 +58,6 @@ function buildCorsHeaders(allowOrigin: string): Record<string, string> {
   };
 }
 
-// ---------------------------------------------------------------------------
-// IP extraction
-// ---------------------------------------------------------------------------
-
 /**
  * Extract a best-effort client IP. Vercel sets x-forwarded-for as a
  * comma-separated list; the first entry is the original client IP (Vercel
@@ -84,10 +74,6 @@ function extractClientIp(req: NextRequest): string {
   if (real) return real;
   return "anon";
 }
-
-// ---------------------------------------------------------------------------
-// Main middleware
-// ---------------------------------------------------------------------------
 
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;

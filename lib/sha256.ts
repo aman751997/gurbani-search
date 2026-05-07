@@ -1,24 +1,19 @@
-// Pure-JS synchronous SHA-256 (FIPS 180-4). Used for cache keys in
-// lib/captionCache.ts. Returns a lowercase hex digest.
+// Pure-JS synchronous SHA-256 (FIPS 180-4). Used for cache keys in captionCache.ts.
 //
-// Why not node:crypto? This module must be importable from code that
-// runs on the Vercel Edge runtime (U11 /api/caption), which forbids
-// `node:*` builtins. globalThis.crypto.subtle exists on Edge but is
-// async; our call-sites want a sync hash for a small (< 1 KB) input.
-// A pure-JS impl of SHA-256 is tiny, fully audited by wide community
-// use, and portable.
+// Uses a pure-JS impl rather than node:crypto because this module must run on
+// the Vercel Edge runtime, which forbids `node:*` builtins. crypto.subtle is
+// available on Edge but is async, and our call-sites need a sync hash for small inputs.
 //
-// Adapted from the well-known public-domain reference implementation
-// (FIPS 180-4). Reviewed for correctness against the empty-string and
-// "abc" test vectors in the SHA-256 spec.
+// Adapted from the public-domain FIPS 180-4 reference. Verified against the
+// empty-string and "abc" test vectors.
 
-// Initial hash values (FIPS 180-4 §5.3.3)
+// Initial hash values (FIPS 180-4)
 const H0: readonly number[] = [
   0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
   0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 ];
 
-// Round constants (FIPS 180-4 §4.2.2)
+// Round constants (FIPS 180-4)
 const K: readonly number[] = [
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
   0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
