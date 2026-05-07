@@ -32,7 +32,7 @@ sequenceDiagram
     V-->>U: stream each caption as it resolves
 ```
 
-More detail in [`docs/architecture.md`](docs/architecture.md).
+The mermaid diagram above covers the full request flow.
 
 ## Stack
 
