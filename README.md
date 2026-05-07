@@ -6,8 +6,6 @@ Semantic search over Sri Guru Granth Sahib. Type a concept — `anger`, `haumai`
 
 All scripture comes verbatim from the database. The AI only writes the match explanation, never the scripture itself.
 
-<!-- TODO: drop real screenshots into docs/screenshots/ -->
-
 ## How it works
 
 ```mermaid
@@ -94,15 +92,6 @@ Or set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` to use Claude instead of G
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
 | `npm run precompute:starter` | Regenerate homepage starter captions |
-| `npm run eval:run` | Run retrieval eval, write report to `eval/results/` |
-
-## Eval
-
-```bash
-npm run eval:run
-```
-
-Current eval scores (nDCG@10, MRR@10, Recall@20) are all 1.0 — but read that skeptically. The gold set is bootstrapped from the pipeline's own output, so it's self-consistent by construction, not independently validated. The harness exists so better gold-set entries can be added over time. See [`eval/README.md`](eval/README.md) for methodology.
 
 ## Attribution
 

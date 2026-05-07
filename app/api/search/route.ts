@@ -12,7 +12,7 @@
 //   503 — Cloudflare embedding failed OR Supabase RPC failed. Body:
 //         { error: "service_unavailable" }. Root cause logged to stderr only.
 //
-// Rate-limiting and CORS are applied by middleware.ts.
+// Rate-limiting and CORS are applied by proxy.ts.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -25,7 +25,7 @@ import { runHybridSearch, SearchError } from "@/lib/search";
 
 // Run on Node runtime — halfvec-typed parameters through the Supabase JS
 // client are more robust outside Edge, and the rate-limiter already lives
-// in middleware.ts which is Edge.
+// in proxy.ts which is Edge.
 export const runtime = "nodejs";
 // Never cache search responses. Every request goes through embedding+RPC.
 export const dynamic = "force-dynamic";

@@ -1,16 +1,4 @@
-// Next.js Edge middleware. Applies to all /api/* routes.
-//
-// Responsibilities:
-//   1. Rate-limit per client IP using the correct limiter for the route.
-//   2. Apply CORS policy:
-//        - production (VERCEL_ENV === "production"): allow only PROD_DOMAIN.
-//        - preview / dev: allow "*".
-//      On /api/caption specifically, reject disallowed origins with 403 to
-//      prevent third-party sites from scraping SSE captions.
-//   3. Forward the request with rate-limit diagnostic headers.
-//
-// Does NOT validate the query body — that happens inside the route handlers
-// because Edge middleware cannot read the POST body without consuming it.
+// Rate limiting + CORS for /api/* routes.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -75,7 +63,7 @@ function extractClientIp(req: NextRequest): string {
   return "anon";
 }
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   const origin = req.headers.get("origin");
   const { allowed, allowOriginHeader } = resolveAllowedOrigin(origin);

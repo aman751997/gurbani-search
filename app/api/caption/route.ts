@@ -11,7 +11,7 @@
 // on Edge gives 30s headroom on the same tier.
 //
 // Middleware gates this route with rate-limiting and CORS. The query is
-// re-validated here because middleware doesn't inspect GET query strings.
+// re-validated here because proxy doesn't inspect GET query strings.
 //
 // Error contract:
 //   400 — invalid query or invalid shabads param

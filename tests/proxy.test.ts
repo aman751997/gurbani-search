@@ -1,14 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-/**
- * Middleware is a chunky integration point. We mock the rate-limit module so
- * we never touch Upstash, and drive the middleware with hand-built
- * NextRequest objects.
- *
- * Note: middleware.ts imports "@/lib/rateLimit" which resolves to
- * lib/rateLimit.ts via the vitest alias. vi.mock must use the SAME specifier
- * the importer uses (or its resolved absolute path).
- */
 
 type LimitFn = (ip: string) => Promise<{
   success: boolean;
@@ -46,8 +37,7 @@ vi.mock("@/lib/rateLimit", () => {
   };
 });
 
-// Import AFTER vi.mock so the mock is applied.
-import { middleware } from "@/middleware";
+import { proxy as middleware } from "@/proxy";
 import { NextRequest } from "next/server";
 
 function makeRequest(
