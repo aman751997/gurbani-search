@@ -136,7 +136,7 @@ To add or refine a gold-set entry, open [`eval/gold-set.yaml`](eval/gold-set.yam
 
 ## Attribution
 
-- **Corpus.** BaniDB (NPOSL-3.0, non-commercial use). See <https://www.banidb.com/>. The seed data in this repo is derived from BaniDB's freely-licensed JSON exports.
+- **Corpus.** BaniDB by Khalis Foundation (MIT). See <https://github.com/KhalisFoundation/banidb-api>. The seed data in this repo is derived from BaniDB's public API.
 - **English translation.** Bhai Manmohan Singh (SGPC, 1962–1969, public-domain-equivalent status). Used for ~96% of shabads. The remaining ~4% fall back to Sant Singh Khalsa (used under fair-use provisions; attributed in the `translation_source` column).
 - **Fonts.** Noto Sans Gurmukhi (SIL Open Font License).
 - **Embeddings.** BGE-M3 by BAAI (MIT). Hosted on Cloudflare Workers AI.
@@ -173,4 +173,4 @@ For everything else (v1.1 features, UX polish, new filters) please open an issue
 
 ## License
 
-Code: MIT. Data files (`data/*.json`, corpus in DB) retain BaniDB's NPOSL-3.0 non-commercial terms; do not redistribute the corpus for commercial use.
+MIT. See [LICENSE](LICENSE). Corpus data sourced from BaniDB (also MIT-licensed by Khalis Foundation).
