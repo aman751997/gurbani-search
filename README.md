@@ -7,7 +7,7 @@
     <br /><br />
     <a href="https://gurbani-search-psi.vercel.app"><strong>Try it live</strong></a>
     <br /><br />
-    <a href="https://github.com/aman751997/gurbani-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License MIT" /></a>
+    <a href="https://github.com/aman751997/gurbani-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/MIT_License-blue.svg" alt="MIT License" /></a>
     <img src="https://img.shields.io/badge/tests-362%20passed-brightgreen" alt="Tests 362 passed" />
     <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
     <img src="https://img.shields.io/badge/deploy-Vercel-black?logo=vercel" alt="Deployed on Vercel" />
@@ -98,23 +98,55 @@ Total cost: ~$1/month (domain only).
 
 ## Retrieval quality
 
-I evaluate retrieval against a 75-query gold set (50 English + 25 Roman-Punjabi) using standard IR metrics:
+How do you know the search is returning the right shabads? I built an evaluation harness that measures this.
 
-| Metric | Score | What it measures |
-|---|---|---|
-| **nDCG@10** | 1.0 | Ranking quality — are the best results at the top? |
-| **MRR@10** | 1.0 | How quickly does the first relevant result appear? |
-| **Recall@20** | 1.0 | Does the system find all relevant shabads? |
+### Gold set
 
-**Caveat:** The gold set was bootstrapped from the system's own output, then hand-verified. Scores are self-consistent, not independently validated. They serve as a regression guard — CI fails if nDCG@10 drops below 0.3 — not a quality claim. See [`eval/`](eval/) for methodology.
+75 queries (50 English + 25 Roman-Punjabi), each with hand-picked relevant shabad IDs:
 
-### Test suite
+```yaml
+- query: anger
+  query_language: english
+  relevant: ["2519", "1408", "3722", "94", "73"]
+  notes: krodh
 
-31 test files, 362 tests, all passing in ~2 seconds:
+- query: forgiveness
+  query_language: english
+  relevant: ["862", "2089", "4118", "1729", "5332"]
+  notes: khimaa / divine mercy
 
-<p align="center">
-  <img src="assets/test-results.png" alt="Vitest output — 31 files, 362 tests passed in 2.33s" width="600" />
-</p>
+- query: haumai
+  query_language: roman-punjabi
+  relevant: ["2155", "1706", "2230", "4886", "343"]
+  notes: ego — same concept, Punjabi word
+```
+
+Each query has 3-5 shabads that are theologically relevant — not just keyword matches. "anger" maps to shabads about *krodh* even if they never use the English word.
+
+### How it's scored
+
+The harness runs all 75 queries through the live pipeline (embed → hybrid search → rank) and compares retrieved results against the gold set using standard information retrieval metrics:
+
+```mermaid
+flowchart LR
+    G["Gold set<br/>75 queries + relevant IDs"] --> E["embed each query<br/>(Cloudflare BGE-M3)"]
+    E --> S["hybrid search<br/>(pgvector + pg_trgm)"]
+    S --> C["compare retrieved vs. expected"]
+    C --> M["nDCG@10 · MRR@10 · Recall@20"]
+    M --> F{"nDCG@10 ≥ 0.3?"}
+    F -- yes --> P["✓ pass"]
+    F -- no --> X["✗ fail — regression detected"]
+```
+
+| Metric | What it measures |
+|---|---|
+| **nDCG@10** | Are the best results ranked highest? (position-weighted) |
+| **MRR@10** | How quickly does the first relevant hit appear? |
+| **Recall@20** | Did we find all the relevant shabads in the top 20? |
+
+Results are broken down per-query and per-language (English vs. Roman-Punjabi), so I can spot exactly which queries degrade if I change the embedding model, adjust hybrid weights, or modify the search RPC.
+
+**Honesty note:** The gold set was bootstrapped from the system's own output, then hand-verified. This makes it a regression guard, not an independent quality claim. If I swap the embedding model or change the 70/30 dense/lexical weighting, I'll know immediately if retrieval degrades — but the absolute scores are self-referential. See [`eval/`](eval/) for full methodology.
 
 ## What it doesn't do
 
