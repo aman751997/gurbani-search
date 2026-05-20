@@ -59,6 +59,7 @@ export function ResultCardList({
     if (!useSSE) return;
     if (shabadIds.length === 0) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset loading state before opening EventSource subscription
     setStream((prev) => ({ ...prev, done: false, error: null }));
 
     const url = sseUrl(query, shabadIds);

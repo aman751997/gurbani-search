@@ -200,7 +200,7 @@ export async function buildProductionBootstrapDeps(): Promise<BootstrapDeps> {
       await writeFile(GOLD_SET_PATH, HEADER + body, "utf8");
     },
     log: (m) => {
-      // eslint-disable-next-line no-console
+       
       console.log(m);
     },
     sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
@@ -234,10 +234,10 @@ if (invokedDirectly) {
       topK: 5,
       delayMs: 50,
     });
-    // eslint-disable-next-line no-console
+     
     console.log(`\nWrote ${entries.length} gold-set entries to ${GOLD_SET_PATH}`);
   })().catch((e) => {
-    // eslint-disable-next-line no-console
+     
     console.error("bootstrap-gold-set failed:", e);
     process.exit(2);
   });

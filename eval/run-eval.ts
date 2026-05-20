@@ -281,7 +281,7 @@ export async function buildProductionDeps(): Promise<EvalDeps> {
       await writeFile(join(RESULTS_DIR, filename), contents, "utf8");
     },
     log: (m) => {
-      // eslint-disable-next-line no-console
+       
       console.log(m);
     },
   };
@@ -303,19 +303,19 @@ if (invokedDirectly) {
     const md = renderMarkdownReport(agg);
     const filename = reportFilename();
     await deps.writeReport(filename, md);
-    // eslint-disable-next-line no-console
+     
     console.log(
       `\nWrote eval/results/${filename}\nAggregate: nDCG@10=${agg.meanNdcg10.toFixed(4)} MRR@10=${agg.meanMrr10.toFixed(4)} Recall@20=${agg.meanRecall20.toFixed(4)}`,
     );
     if (agg.meanNdcg10 < NDCG_SANITY_FLOOR) {
-      // eslint-disable-next-line no-console
+       
       console.error(
         `\nSANITY FLOOR BREACHED: mean nDCG@10 ${agg.meanNdcg10.toFixed(4)} < ${NDCG_SANITY_FLOOR}. Reporting numbers as-is; not silently tuning.`,
       );
       process.exit(1);
     }
   })().catch((e) => {
-    // eslint-disable-next-line no-console
+     
     console.error("eval run failed:", e);
     process.exit(2);
   });

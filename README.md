@@ -2,6 +2,8 @@
 
 > **Finds your Gurbani. Never writes it.**
 
+**Live:** [gurbani-search-psi.vercel.app](https://gurbani-search-psi.vercel.app)
+
 Semantic search over Sri Guru Granth Sahib. Type a concept — `anger`, `haumai`, `forgiveness`, `krodh` — and get ranked shabads with Gurmukhi, transliteration, English translation, and a short AI-generated note explaining why each result matches your query.
 
 All scripture comes verbatim from the database. The AI only writes the match explanation, never the scripture itself.

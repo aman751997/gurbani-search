@@ -1,0 +1,6 @@
+ingestion/
+eval/
+docs/
+.next/
+node_modules/
+coverage/

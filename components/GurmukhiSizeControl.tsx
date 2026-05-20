@@ -35,6 +35,7 @@ export function GurmukhiSizeControl() {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (isSize(stored)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe localStorage hydration; must run in effect to avoid hydration mismatch
         setSize(stored);
         applyScale(stored);
         return;
