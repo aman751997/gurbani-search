@@ -36,6 +36,12 @@ Every result shows:
 
 The AI only writes the explanation. It never writes, paraphrases, or summarizes Gurbani.
 
+## Why I built this
+
+I grew up in a Sikh family. When you're trying to find what Gurbani says about something you're going through — grief, doubt, anger — you end up on keyword-search tools that only find exact word matches. Gurbani doesn't work like that. It speaks in metaphor, in Raag, in layers.
+
+The existing tools (SikhiToTheMax, iGurbani, SearchGurbani) are all keyword-based. Nobody was doing semantic search. So I built it — a search engine that understands what you *mean*, finds the right shabads, and gets out of the way. No chatbot, no AI guru, no generated scripture. Just search.
+
 ## Why "retrieval only"?
 
 The Sikh community takes Gurbani authenticity seriously — and should. A previous AI project was pulled down after it fabricated scripture. The SGPC now has an active AI sub-committee watching this space.
@@ -90,6 +96,18 @@ Scripture shows up instantly. AI explanations stream in one-by-one as they're ge
 
 Total cost: ~$1/month (domain only).
 
+## Retrieval quality
+
+I evaluate retrieval against a 75-query gold set (50 English + 25 Roman-Punjabi) using standard IR metrics:
+
+| Metric | Score | What it measures |
+|---|---|---|
+| **nDCG@10** | 1.0 | Ranking quality — are the best results at the top? |
+| **MRR@10** | 1.0 | How quickly does the first relevant result appear? |
+| **Recall@20** | 1.0 | Does the system find all relevant shabads? |
+
+**Caveat:** The gold set was bootstrapped from the system's own output, then hand-verified. Scores are self-consistent, not independently validated. They serve as a regression guard — CI fails if nDCG@10 drops below 0.3 — not a quality claim. See [`eval/`](eval/) for methodology.
+
 ## What it doesn't do
 
 - Generate, paraphrase, or summarize scripture
@@ -97,26 +115,28 @@ Total cost: ~$1/month (domain only).
 - Log queries — people search for deeply personal things. There's no `query_log` table.
 - Accept Gurmukhi-script input (English and Roman-Punjabi only for now)
 
-## Run it locally
+## Run it yourself
+
+Everything runs on free tiers. You'll need 4 accounts (all free, no credit card):
+
+| Service | Sign up | What you'll get |
+|---|---|---|
+| [Supabase](https://supabase.com) | 2 min | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` |
+| [Cloudflare](https://dash.cloudflare.com) | 2 min | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN` |
+| [Groq](https://console.groq.com) | 1 min | `GROQ_API_KEY` |
+| [Upstash](https://upstash.com) | 1 min | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+
+Then:
 
 ```bash
 git clone https://github.com/aman751997/gurbani-search.git
 cd gurbani-search
 npm install
-cp .env.example .env.local   # fill in your keys
+cp .env.example .env.local   # paste your keys
 npm run dev                   # http://localhost:3000
 ```
 
-You'll need API keys from:
-
-| Service | What for | Tier |
-|---|---|---|
-| [Supabase](https://supabase.com) | Database + vector search | Free |
-| [Cloudflare](https://dash.cloudflare.com) | BGE-M3 embeddings | Free |
-| [Groq](https://console.groq.com) | Caption generation | Free |
-| [Upstash](https://upstash.com) | Rate limiting | Free |
-
-Or swap Groq for Anthropic: set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`. Full variable list in [`.env.example`](.env.example).
+Want to use Claude instead of Groq for captions? Set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`. Full variable list in [`.env.example`](.env.example).
 
 ## Scripts
 
