@@ -1,12 +1,48 @@
-# Gurbani Search
+<p align="center">
+  <h1 align="center">Gurbani Search</h1>
+  <p align="center">
+    <strong>Finds your Gurbani. Never writes it.</strong>
+    <br />
+    Semantic search over the Sri Guru Granth Sahib
+    <br /><br />
+    <a href="https://gurbani-search-psi.vercel.app"><strong>Try it live</strong></a>
+  </p>
+</p>
 
-> **Finds your Gurbani. Never writes it.**
+<p align="center">
+  <img src="assets/homepage.png" alt="Gurbani Search homepage — search bar with starter themes like Anger, Seva, Ego, Forgiveness" width="720" />
+</p>
 
-**Live:** [gurbani-search-psi.vercel.app](https://gurbani-search-psi.vercel.app)
+---
 
-Semantic search over Sri Guru Granth Sahib. Type a concept — `anger`, `haumai`, `forgiveness`, `krodh` — and get ranked shabads with Gurmukhi, transliteration, English translation, and a short AI-generated note explaining why each result matches your query.
+Most Gurbani search tools match keywords. Type "forgiveness" and you'll get shabads that literally contain the word "forgiveness." That misses the point — Gurbani talks about forgiveness through metaphors of washing sins, divine grace, and the Guru's mercy.
 
-All scripture comes verbatim from the database. The AI only writes the match explanation, never the scripture itself.
+This app searches by **meaning**. It embeds your query and the entire SGGS corpus into the same vector space, then finds the shabads closest in concept — not just in spelling. You get results you wouldn't find with Ctrl+F.
+
+<p align="center">
+  <img src="assets/search-results.png" alt="Search results for 'forgiveness' showing Gurmukhi text, transliteration, English translation, and AI explanation" width="720" />
+</p>
+
+Every result shows:
+- **Gurmukhi** — the original scripture, untouched
+- **Transliteration** — Roman-script pronunciation
+- **English translation** — by Bhai Manmohan Singh (public domain, SGPC 1962-69)
+- **AI explanation** — a short note on *why* this shabad matches your query
+
+The AI only writes the explanation. It never writes, paraphrases, or summarizes Gurbani.
+
+## Why "retrieval only"?
+
+The Sikh community takes Gurbani authenticity seriously — and should. A previous AI project was pulled down after it fabricated scripture. The SGPC now has an active AI sub-committee watching this space.
+
+So I treat that as a hard engineering constraint, not a policy footnote. Four layers enforce it:
+
+1. **Type separation** — scripture and AI text flow through different React components with disjoint TypeScript types. You literally can't pass Gurbani into the caption slot.
+2. **Schema lock** — the LLM output schema only has `explanation` + `confidence` fields. No slot for scripture to land in.
+3. **Runtime guards** — every LLM response passes Zod validation, a Gurmukhi-character detector (zero U+0A00-U+0A7F codepoints allowed in captions), and a substring match against the translation.
+4. **Visual separation** — horizontal rule, distinct heading, different typeface, and an explicit "Written by an AI assistant. Not Gurbani." line under every caption.
+
+Is this overkill? Maybe. But one fabricated verse in the wrong slot would kill trust permanently.
 
 ## How it works
 
@@ -15,74 +51,67 @@ sequenceDiagram
     autonumber
     participant U as User
     participant V as Next.js (Vercel, bom1)
-    participant CF as Cloudflare Workers AI<br/>(BGE-M3, 1024-d)
-    participant PG as Supabase Postgres<br/>(pgvector HNSW + pg_trgm)
-    participant LM as Groq Llama-3.3-70B<br/>(or Claude Haiku)
+    participant CF as Cloudflare Workers AI
+    participant PG as Supabase Postgres
+    participant LM as Groq / Claude Haiku
 
-    U->>V: GET /search?q=anger
-    V->>CF: embed(query)
-    CF-->>V: 1024-d unit vector
-    V->>PG: rpc search_hybrid(vec, text, k=10)
-    PG-->>V: top-10 rows
-    V-->>U: stream HTML with empty caption slots
-    Note over V,U: SSE to /api/caption — parallel fan-out
-    V->>LM: generate(query, shabad) × 10 concurrent
-    LM-->>V: {explanation, confidence}
-    V->>V: 4-layer guard (schema, Gurmukhi, substring, provider-error)
-    V-->>U: stream each caption as it resolves
+    U->>V: searches "forgiveness"
+    V->>CF: embed query → BGE-M3 (1024-d)
+    CF-->>V: query vector
+    V->>PG: search_hybrid(vector, text, k=10)
+    Note over PG: 70% cosine similarity<br/>30% trigram text match
+    PG-->>V: top-10 shabads
+    V-->>U: stream page with scripture immediately
+    par caption fan-out (×10 concurrent)
+        V->>LM: "why does this shabad match?"
+        LM-->>V: {explanation, confidence}
+        V->>V: 4-layer guard check
+        V-->>U: stream caption via SSE
+    end
 ```
 
-The mermaid diagram above covers the full request flow.
+Scripture shows up instantly. AI explanations stream in one-by-one as they're generated.
 
 ## Stack
 
 | Layer | Choice | Why |
 |---|---|---|
-| **App** | Next.js 16 on Vercel (Hobby) | Single deploy. Python only used locally for one-time corpus ingestion. Pinned to Mumbai (`bom1`) to keep Upstash + Supabase latency under 10ms. |
-| **Embeddings** | BGE-M3 via Cloudflare Workers AI | Best multilingual embedding model for Indic scripts at 1024-d. Same endpoint for ingestion and queries — no cosine drift. Free tier covers this traffic easily. |
-| **Captions** | Groq Llama-3.3-70B (default) | Free tier, JSON-mode structured output. Swappable to Claude Haiku via `LLM_PROVIDER=anthropic`. |
-| **Translation** | Bhai Manmohan Singh (96%), Sant Singh Khalsa (4%) | Bhai Manmohan Singh's SGPC translation (1962-69) is public-domain-equivalent. Tracked per-row via `translation_source`. |
-| **Rate limiting** | Upstash Redis | |
-| **Database** | Supabase Postgres (pgvector + pg_trgm) | Hybrid search: vector similarity + trigram text matching. |
+| **App** | Next.js 16 on Vercel Hobby | Single deploy, $0/mo. Pinned to Mumbai for latency. |
+| **Embeddings** | BGE-M3 via Cloudflare Workers AI | Best multilingual model for Indic scripts. Free tier. |
+| **Search** | Supabase Postgres (pgvector HNSW + pg_trgm) | Hybrid vector + text matching in one query. Free tier. |
+| **Captions** | Groq Llama-3.3-70B | Free tier, fast inference. Swappable to Claude Haiku via one env var. |
+| **Rate limiting** | Upstash Redis | 30 req/min/IP. Deployed in Mumbai alongside everything else. |
+| **Translation** | Bhai Manmohan Singh (96%) | Public-domain SGPC translation (1962-69). ~4% fallback to Sant Singh Khalsa. |
 
-## Why "retrieval only"
-
-The Sikh community has a hard line on Gurbani authenticity. A previous AI project (KhalsaGPT) was pulled down after it fabricated scripture. The SGPC now has an active AI sub-committee watching this space.
-
-I treat that as a design constraint, not a suggestion. Four layers enforce it:
-
-1. **Separate components** — `ScriptureBlock` and `CaptionBlock` have disjoint prop types. TypeScript won't let scripture strings flow into caption slots or vice versa.
-2. **Schema enforcement** — LLM output only has `explanation` + `confidence` fields. No slot exists for scripture text to land in.
-3. **Runtime guards** — Every LLM response passes through Zod validation, a Gurmukhi-character check (zero U+0A00-U+0A7F codepoints allowed), and a 7-token substring match against the translation. Any failure falls back to a neutral "No AI explanation for this shabad" message.
-4. **Visual separation** — Horizontal rule, distinct heading with robot icon, different typeface, and "Written by an AI assistant. Not Gurbani." attribution line.
-
-Overkill? Maybe. But one leaked paraphrase in the wrong slot would kill trust permanently.
+Total cost: ~$1/month (domain only).
 
 ## What it doesn't do
 
 - Generate, paraphrase, or summarize scripture
 - Offer *arth* (authoritative interpretation)
-- Log queries — people search for deeply personal things (grief, doubt, shame). There's no `query_log` table.
+- Log queries — people search for deeply personal things. There's no `query_log` table.
 - Accept Gurmukhi-script input (English and Roman-Punjabi only for now)
 
-## Getting started
+## Run it locally
 
 ```bash
+git clone https://github.com/aman751997/gurbani-search.git
+cd gurbani-search
 npm install
-cp .env.example .env.local     # fill in your keys
-npm run dev                    # http://localhost:3000
+cp .env.example .env.local   # fill in your keys
+npm run dev                   # http://localhost:3000
 ```
 
-You'll need these in `.env.local`:
+You'll need API keys from:
 
-| Variable | Source |
-|---|---|
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` | [Supabase](https://supabase.com) |
-| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN` | [Cloudflare](https://dash.cloudflare.com) |
-| `GROQ_API_KEY` | [Groq](https://console.groq.com) |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | [Upstash](https://upstash.com) |
+| Service | What for | Tier |
+|---|---|---|
+| [Supabase](https://supabase.com) | Database + vector search | Free |
+| [Cloudflare](https://dash.cloudflare.com) | BGE-M3 embeddings | Free |
+| [Groq](https://console.groq.com) | Caption generation | Free |
+| [Upstash](https://upstash.com) | Rate limiting | Free |
 
-Or set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` to use Claude instead of Groq. Full list in [`.env.example`](.env.example).
+Or swap Groq for Anthropic: set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`. Full variable list in [`.env.example`](.env.example).
 
 ## Scripts
 
@@ -90,15 +119,25 @@ Or set `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` to use Claude instead of G
 |---|---|
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
-| `npm test` | Vitest (362 unit + 2 integration) |
+| `npm test` | 362 unit + 2 integration tests |
 | `npm run lint` | ESLint |
-| `npm run format` | Prettier |
+| `npm run eval:run` | Retrieval quality eval (nDCG, MRR, Recall) |
 | `npm run precompute:starter` | Regenerate homepage starter captions |
+
+## Corpus & ingestion
+
+The corpus is the full Sri Guru Granth Sahib (~5,500 shabads) sourced from [BaniDB](https://github.com/KhalisFoundation/banidb-api) (MIT). Ingestion is a one-time, laptop-only Python pipeline:
+
+```
+BaniDB API → shabads.jsonl → Cloudflare BGE-M3 embeddings → Supabase bulk load
+```
+
+Scripts live in `ingestion/`. The deployed app never writes to the database — it's read-only by design.
 
 ## Attribution
 
 - **Corpus** — [BaniDB](https://github.com/KhalisFoundation/banidb-api) by Khalis Foundation (MIT)
-- **Translation** — Bhai Manmohan Singh (SGPC, 1962-69, public domain equivalent). ~4% fallback to Sant Singh Khalsa.
+- **Translation** — Bhai Manmohan Singh (SGPC, 1962-69, public domain equivalent). ~4% fallback to Sant Singh Khalsa where attributed.
 - **Font** — Noto Sans Gurmukhi (SIL Open Font License)
 - **Embeddings** — BGE-M3 by BAAI (MIT)
 
