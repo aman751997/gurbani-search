@@ -108,6 +108,14 @@ I evaluate retrieval against a 75-query gold set (50 English + 25 Roman-Punjabi)
 
 **Caveat:** The gold set was bootstrapped from the system's own output, then hand-verified. Scores are self-consistent, not independently validated. They serve as a regression guard — CI fails if nDCG@10 drops below 0.3 — not a quality claim. See [`eval/`](eval/) for methodology.
 
+### Test suite
+
+31 test files, 362 tests, all passing in ~2 seconds:
+
+<p align="center">
+  <img src="assets/test-results.png" alt="Vitest output — 31 files, 362 tests passed in 2.33s" width="600" />
+</p>
+
 ## What it doesn't do
 
 - Generate, paraphrase, or summarize scripture
