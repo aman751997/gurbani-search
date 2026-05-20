@@ -6,6 +6,11 @@
     Semantic search over the Sri Guru Granth Sahib
     <br /><br />
     <a href="https://gurbani-search-psi.vercel.app"><strong>Try it live</strong></a>
+    <br /><br />
+    <a href="https://github.com/aman751997/gurbani-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License MIT" /></a>
+    <img src="https://img.shields.io/badge/tests-362%20passed-brightgreen" alt="Tests 362 passed" />
+    <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js 16" />
+    <img src="https://img.shields.io/badge/deploy-Vercel-black?logo=vercel" alt="Deployed on Vercel" />
   </p>
 </p>
 
