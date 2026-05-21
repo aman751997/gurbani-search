@@ -20,9 +20,15 @@
 
 ---
 
-Most Gurbani search tools match keywords. Type "forgiveness" and you'll get shabads that literally contain the word "forgiveness." That misses the point — Gurbani talks about forgiveness through metaphors of washing sins, divine grace, and the Guru's mercy.
+Most Gurbani search tools match keywords. This one searches by **meaning**.
 
-This app searches by **meaning**. It embeds your query and the entire SGGS corpus into the same vector space, then finds the shabads closest in concept — not just in spelling. You get results you wouldn't find with Ctrl+F.
+| | Keyword search (SikhiToTheMax, etc.) | Gurbani Search |
+|---|---|---|
+| Search "forgiveness" | Finds shabads containing the word "forgiveness" | Finds shabads about *khimaa*, divine mercy, washing sins — even if the word "forgiveness" never appears |
+| Search "death" | Literal matches only | Finds shabads about impermanence, the cycle of birth, Kal, and Waheguru's call |
+| Search "haumai" | No results (not in English translations) | Finds shabads about ego, self-centeredness, and the five thieves |
+
+Gurbani speaks in metaphor, in Raag, in layers. A keyword search can't follow that. Semantic search can — it embeds your query and the entire SGGS corpus into the same vector space, then finds the shabads closest in concept.
 
 <p align="center">
   <img src="assets/search-results.png" alt="Search results for 'forgiveness' showing Gurmukhi text, transliteration, English translation, and AI explanation" width="720" />
@@ -53,7 +59,7 @@ So I treat that as a hard engineering constraint, not a policy footnote. Four la
 3. **Runtime guards** — every LLM response passes Zod validation, a Gurmukhi-character detector (zero U+0A00-U+0A7F codepoints allowed in captions), and a substring match against the translation.
 4. **Visual separation** — horizontal rule, distinct heading, different typeface, and an explicit "Written by an AI assistant. Not Gurbani." line under every caption.
 
-Is this overkill? Maybe. But one fabricated verse in the wrong slot would kill trust permanently.
+One fabricated verse in the wrong slot would kill trust permanently.
 
 ## How it works
 
@@ -94,7 +100,7 @@ Scripture shows up instantly. AI explanations stream in one-by-one as they're ge
 | **Rate limiting** | Upstash Redis | 30 req/min/IP. Deployed in Mumbai alongside everything else. |
 | **Translation** | Bhai Manmohan Singh (96%) | Public-domain SGPC translation (1962-69). ~4% fallback to Sant Singh Khalsa. |
 
-Total cost: ~$1/month (domain only).
+Full semantic search over 5,500 shabads for **~$1/month** — every service above runs on a free tier. The only cost is the domain.
 
 ## Retrieval quality
 
@@ -148,12 +154,22 @@ Results are broken down per-query and per-language (English vs. Roman-Punjabi), 
 
 **Honesty note:** The gold set was bootstrapped from the system's own output, then hand-verified. This makes it a regression guard, not an independent quality claim. If I swap the embedding model or change the 70/30 dense/lexical weighting, I'll know immediately if retrieval degrades — but the absolute scores are self-referential. See [`eval/`](eval/) for full methodology.
 
+## Design decisions
+
+A few choices that aren't obvious from the code:
+
+- **No query logging.** People search for deeply personal things — grief, doubt, shame. There's no `query_log` table. Vercel runtime logs capture latency and errors only.
+- **Gurmukhi font-size control.** The `A S/M/L` button lets users scale Gurmukhi text independently. Not everyone reads Gurmukhi at the same size, and browser zoom scales everything.
+- **Starter themes on the homepage.** A blank search box is intimidating when you don't know what to type. The theme grid (Anger, Seva, Ego, Forgiveness...) lowers the barrier to first search.
+- **Streaming captions, not blocking.** Scripture loads instantly via SSR. AI explanations stream in via SSE as they generate. You're never waiting on the LLM to see Gurbani.
+
 ## What it doesn't do
 
 - Generate, paraphrase, or summarize scripture
 - Offer *arth* (authoritative interpretation)
-- Log queries — people search for deeply personal things. There's no `query_log` table.
 - Accept Gurmukhi-script input (English and Roman-Punjabi only for now)
+
+Gurmukhi-script search and Raag-based browsing are next.
 
 ## Run it yourself
 
