@@ -214,7 +214,7 @@ describe("GroqProvider.generate", () => {
     expect(groqCreateMock).toHaveBeenCalledTimes(1);
     const [body] = groqCreateMock.mock.calls[0];
     expect(body).toMatchObject({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       temperature: 0.3,
       response_format: { type: "json_object" },
     });

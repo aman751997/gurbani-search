@@ -43,9 +43,15 @@ export interface LLMProvider {
 // Re-export Caption for convenience — the route layer imports from here.
 export type { Caption, Confidence, GuardTrigger };
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_TEMPERATURE = 0.3;
-const GROQ_MAX_TOKENS = 250;
+// gpt-oss is a reasoning model: reasoning tokens are billed against the
+// completion budget, so this cap covers both the (hidden) reasoning and the
+// JSON answer. 250 would starve the answer once reasoning consumes its share.
+const GROQ_MAX_TOKENS = 1024;
+// gpt-oss accepts "low" | "medium" | "high" (default "medium"). The caption
+// task is tiny, so "low" keeps latency under the 10s timeout.
+const GROQ_REASONING_EFFORT = "low" as const;
 const GROQ_TIMEOUT_MS = 10_000;
 
 export class ProviderError extends Error {
@@ -116,7 +122,10 @@ export class GroqProvider implements LLMProvider {
         {
           model: this.model,
           temperature: GROQ_TEMPERATURE,
-          max_tokens: GROQ_MAX_TOKENS,
+          max_completion_tokens: GROQ_MAX_TOKENS,
+          reasoning_effort: GROQ_REASONING_EFFORT,
+          // Keep reasoning out of `content` so the parser sees only the JSON.
+          reasoning_format: "hidden",
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },

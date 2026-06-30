@@ -7,7 +7,7 @@ Semantic search across the Sri Guru Granth Sahib (SGGS). RAG-based retrieval app
 - **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, TypeScript 5
 - **Database**: Supabase (Postgres) with pgvector (halfvec), pg_trgm
 - **Embeddings**: Cloudflare Workers AI -- BGE-M3, 1024-dim
-- **LLM captions**: Groq (llama-3.3-70b-versatile), Anthropic stub exists
+- **LLM captions**: Groq (openai/gpt-oss-120b), Anthropic stub exists
 - **Rate limiting**: Upstash Redis (sliding window)
 - **Deployment**: Vercel (region: bom1)
 - **Ingestion pipeline**: Python 3.12 (laptop-only, never deployed)
